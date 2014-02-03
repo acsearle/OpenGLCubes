@@ -129,7 +129,7 @@ renderer* renderer::initWithDefaultFBO(GLuint defaultFBOName)
 		// Build Program
 		self->m_characterPrgName = *self->buildProgramFromFile("deferred");
 		
-        self->m_deferredFBOName = self->buildFBOWithWidthAndHeight(500, 500);
+        self->m_deferredFBOName = self->buildFBOWithWidthAndHeight(1000, 1000);
         
 		////////////////////////////////////////////////
 		// Set up OpenGL state that will never change //
@@ -201,19 +201,24 @@ void renderer_impl::render() {
     mvp = projection * modelView;
     mat4 inverseTransposeModelView = invertAndTranspose(modelView);
 	
-	// Have our shader use the modelview projection matrix 
+	// Have our shader use the modelview projection matrix
 	// that we calculated above
 
+	
     glUniformMatrix4fv(glGetUniformLocation(m_characterPrgName, "modelViewMatrix"), 1, GL_FALSE, modelView.m);
     glUniformMatrix4fv(glGetUniformLocation(m_characterPrgName, "projectionMatrix"), 1, GL_FALSE, projection.m);
 	glUniformMatrix4fv(glGetUniformLocation(m_characterPrgName, "inverseTransposeModelViewMatrix"), 1, GL_FALSE, inverseTransposeModelView.m);
 
     glBindFramebuffer(GL_FRAMEBUFFER, m_deferredFBOName);
-    glClearColor(1,0,0,0);
+    glClearColor(0,0,1,0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glClearColor(0,1,0,0);
     glBindTexture(GL_TEXTURE_2D, m_characterTexName);
     glBindVertexArray(m_characterVAOName);
+    GLenum bufs[] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2 };
+    GetGLError();
+    glDrawBuffers(3, bufs);
+    GetGLError();
     glDrawElements(GL_TRIANGLES, m_characterNumElements, GL_UNSIGNED_SHORT, 0);
     
     // Bind our default FBO to render to the screen
@@ -224,15 +229,18 @@ void renderer_impl::render() {
     glBindTexture(GL_TEXTURE_2D, smuggle_color);
     glGenerateMipmap(GL_TEXTURE_2D);
 	
-    modelView = translate(vec3{{0.f, 0.f, -10.f}}) * rotateX(M_PI);
+    modelView = translate(vec3{{0.f, 1.f, -3.f}}) * rotateX(M_PI);
     glUniformMatrix4fv(glGetUniformLocation(m_characterPrgName, "modelViewMatrix"), 1, GL_FALSE, modelView.m);
     glBindVertexArray(m_quadVAOName);
+    GetGLError();
+    //glDrawBuffers(1, bufs);
+    GetGLError();
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
 
     glBindTexture(GL_TEXTURE_2D, smuggle_normal);
     glGenerateMipmap(GL_TEXTURE_2D);
 
-    modelView = translate(vec3{{-1.f, 0.f, -10.f}}) * rotateX(M_PI);
+    modelView = translate(vec3{{-1.f, 1.f, -3.f}}) * rotateX(M_PI);
     glUniformMatrix4fv(glGetUniformLocation(m_characterPrgName, "modelViewMatrix"), 1, GL_FALSE, modelView.m);
     glBindVertexArray(m_quadVAOName);
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
@@ -240,7 +248,7 @@ void renderer_impl::render() {
     glBindTexture(GL_TEXTURE_2D, smuggle_depth);
     glGenerateMipmap(GL_TEXTURE_2D);
 
-    modelView = translate(vec3{{0.f, -1.f, -10.f}}) * rotateX(M_PI);
+    modelView = translate(vec3{{0.f, -0.f, -3.f}}) * rotateX(M_PI);
     glUniformMatrix4fv(glGetUniformLocation(m_characterPrgName, "modelViewMatrix"), 1, GL_FALSE, modelView.m);
     glBindVertexArray(m_quadVAOName);
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
@@ -248,7 +256,7 @@ void renderer_impl::render() {
     glBindTexture(GL_TEXTURE_2D, smuggle_position);
     glGenerateMipmap(GL_TEXTURE_2D);
     
-    modelView = translate(vec3{{-1.f, -1.f, -10.f}}) * rotateX(M_PI);
+    modelView = translate(vec3{{-1.f, -0.f, -3.f}}) * rotateX(M_PI);
     glUniformMatrix4fv(glGetUniformLocation(m_characterPrgName, "modelViewMatrix"), 1, GL_FALSE, modelView.m);
     glBindVertexArray(m_quadVAOName);
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
