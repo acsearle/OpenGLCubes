@@ -122,11 +122,11 @@ renderer* renderer::initWithDefaultFBO(GLuint defaultFBOName)
 		//demoSource *frgSource = NULL;
         string vtxSource, frgSource;
 		
-		filePathName = [[NSBundle mainBundle] pathForResource:@"character" ofType:@"vsh"];
+		filePathName = [[NSBundle mainBundle] pathForResource:@"deferred" ofType:@"vsh"];
 		//vtxSource = srcLoadSource([filePathName cStringUsingEncoding:NSASCIIStringEncoding]);
         vtxSource = load([filePathName cStringUsingEncoding:NSASCIIStringEncoding]);
 		
-		filePathName = [[NSBundle mainBundle] pathForResource:@"character" ofType:@"fsh"];
+		filePathName = [[NSBundle mainBundle] pathForResource:@"deferred" ofType:@"fsh"];
 		//frgSource = srcLoadSource([filePathName cStringUsingEncoding:NSASCIIStringEncoding]);
         frgSource = load([filePathName cStringUsingEncoding:NSASCIIStringEncoding]);
 		

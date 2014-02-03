@@ -2,8 +2,6 @@
 #import "GLEssentialsGLView.h"
 #import "OpenGLRenderer.h"
 
-#define SUPPORT_RETINA_RESOLUTION 1
-
 @interface GLEssentialsGLView (PrivateMethods)
 - (void) initGL;
 
@@ -45,11 +43,8 @@ static CVReturn MyDisplayLinkCallback(CVDisplayLinkRef displayLink,
 	{
 		NSOpenGLPFADoubleBuffer,
 		NSOpenGLPFADepthSize, 24,
-		// Must specify the 3.2 Core Profile to use OpenGL 3.2
-#if ESSENTIAL_GL_PRACTICES_SUPPORT_GL3 
 		NSOpenGLPFAOpenGLProfile,
 		NSOpenGLProfileVersion3_2Core,
-#endif
 		0
 	};
 	
@@ -62,23 +57,19 @@ static CVReturn MyDisplayLinkCallback(CVDisplayLinkRef displayLink,
 	   
     NSOpenGLContext* context = [[[NSOpenGLContext alloc] initWithFormat:pf shareContext:nil] autorelease];
     
-#if ESSENTIAL_GL_PRACTICES_SUPPORT_GL3 && defined(DEBUG)
 	// When we're using a CoreProfile context, crash if we call a legacy OpenGL function
 	// This will make it much more obvious where and when such a function call is made so
 	// that we can remove such calls.
 	// Without this we'd simply get GL_INVALID_OPERATION error for calling legacy functions
 	// but it would be more difficult to see where that function was called.
 	CGLEnable((__bridge CGLContextObj) [context CGLContextObj], kCGLCECrashOnRemovedFunctions);
-#endif
 	
     [self setPixelFormat:pf];
     
     [self setOpenGLContext:context];
     
-#if SUPPORT_RETINA_RESOLUTION
     // Opt-In to Retina resolution
     [self setWantsBestResolutionOpenGLSurface:YES];
-#endif // SUPPORT_RETINA_RESOLUTION
 }
 
 - (void) prepareOpenGL
@@ -151,8 +142,6 @@ static CVReturn MyDisplayLinkCallback(CVDisplayLinkRef displayLink,
 	// Get the view size in Points
 	NSRect viewRectPoints = [self bounds];
     
-#if SUPPORT_RETINA_RESOLUTION
-
     // Rendering at retina resolutions will reduce aliasing, but at the potential
     // cost of framerate and battery life due to the GPU needing to render more
     // pixels.
@@ -166,17 +155,6 @@ static CVReturn MyDisplayLinkCallback(CVDisplayLinkRef displayLink,
     // viewRectPixels will be the same as viewRectPoints for non-retina displays
     NSRect viewRectPixels = [self convertRectToBacking:viewRectPoints];
     
-#else //if !SUPPORT_RETINA_RESOLUTION
-    
-    // App will typically render faster and use less power rendering at
-    // non-retina resolutions since the GPU needs to render less pixels.  There
-    // is the cost of more aliasing, but it will be no-worse than on a Mac
-    // without a retina display.
-    
-    // Points:Pixels is always 1:1 when not supporting retina resolutions
-    NSRect viewRectPixels = viewRectPoints;
-    
-#endif // !SUPPORT_RETINA_RESOLUTION
     
 	// Set the new dimensions in our renderer
 	//[m_renderer resizeWithWidth:viewRectPixels.size.width
