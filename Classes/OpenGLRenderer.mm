@@ -46,6 +46,7 @@ public:
     GLuint m_characterNumElements;
     GLfloat m_characterAngle;
     GLuint m_deferredFBOName;
+    GLuint m_quadVAOName;
     
     GLuint m_viewWidth;
     GLuint m_viewHeight;
@@ -57,7 +58,7 @@ public:
     void deleteFBOAttachment(GLenum attachment);
     GLuint buildFBOWithWidthAndHeight(GLuint width, GLuint height);
     GLuint buildTexture(demoImage* image);
-    program* buildProgram(string* vertexSource, string* fragmentSource);
+    program* buildProgramFromFile(string);
 
 
 };
@@ -97,8 +98,11 @@ renderer* renderer::initWithDefaultFBO(GLuint defaultFBOName)
         auto m = model::voxel();
         self->m_characterVAOName = (new vao(m))->name;
         self->m_characterNumElements = m.elements.size();
-		
         
+        auto n = model::quad();
+        self->m_quadVAOName = (new vao(n))->name;
+        
+		
 		
 		////////////////////////////////////
 		// Load texture for our character //
@@ -122,16 +126,8 @@ renderer* renderer::initWithDefaultFBO(GLuint defaultFBOName)
 		//demoSource *frgSource = NULL;
         string vtxSource, frgSource;
 		
-		filePathName = [[NSBundle mainBundle] pathForResource:@"deferred" ofType:@"vsh"];
-		//vtxSource = srcLoadSource([filePathName cStringUsingEncoding:NSASCIIStringEncoding]);
-        vtxSource = load([filePathName cStringUsingEncoding:NSASCIIStringEncoding]);
-		
-		filePathName = [[NSBundle mainBundle] pathForResource:@"deferred" ofType:@"fsh"];
-		//frgSource = srcLoadSource([filePathName cStringUsingEncoding:NSASCIIStringEncoding]);
-        frgSource = load([filePathName cStringUsingEncoding:NSASCIIStringEncoding]);
-		
 		// Build Program
-		self->m_characterPrgName = *(self->buildProgram(&vtxSource,&frgSource));
+		self->m_characterPrgName = *self->buildProgramFromFile("deferred");
 		
         self->m_deferredFBOName = self->buildFBOWithWidthAndHeight(500, 500);
         
@@ -165,7 +161,6 @@ renderer* renderer::initWithDefaultFBO(GLuint defaultFBOName)
 
 
 
-
 void renderer_impl::resizeWithWidthAndHeight(GLuint width, GLuint height)
 {
 	glViewport(0, 0, width, height);
@@ -174,7 +169,10 @@ void renderer_impl::resizeWithWidthAndHeight(GLuint width, GLuint height)
 	m_viewHeight = height;
 }
 
-GLuint smuggle;
+GLuint smuggle_color;
+GLuint smuggle_normal;
+GLuint smuggle_depth;
+GLuint smuggle_position;
 
 void renderer_impl::render() {
     
@@ -222,16 +220,44 @@ void renderer_impl::render() {
 	glBindFramebuffer(GL_FRAMEBUFFER, m_defaultFBOName);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     //glBindTexture(GL_TEXTURE_2D, m_characterTexName);
-    glBindTexture(GL_TEXTURE_2D, smuggle);
+
+    glBindTexture(GL_TEXTURE_2D, smuggle_color);
     glGenerateMipmap(GL_TEXTURE_2D);
-	glBindVertexArray(m_characterVAOName);
-    glDrawElements(GL_TRIANGLES, m_characterNumElements, GL_UNSIGNED_SHORT, 0);
+	
+    modelView = translate(vec3{{0.f, 0.f, -10.f}}) * rotateX(M_PI);
+    glUniformMatrix4fv(glGetUniformLocation(m_characterPrgName, "modelViewMatrix"), 1, GL_FALSE, modelView.m);
+    glBindVertexArray(m_quadVAOName);
+    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
+
+    glBindTexture(GL_TEXTURE_2D, smuggle_normal);
+    glGenerateMipmap(GL_TEXTURE_2D);
+
+    modelView = translate(vec3{{-1.f, 0.f, -10.f}}) * rotateX(M_PI);
+    glUniformMatrix4fv(glGetUniformLocation(m_characterPrgName, "modelViewMatrix"), 1, GL_FALSE, modelView.m);
+    glBindVertexArray(m_quadVAOName);
+    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
+    
+    glBindTexture(GL_TEXTURE_2D, smuggle_depth);
+    glGenerateMipmap(GL_TEXTURE_2D);
+
+    modelView = translate(vec3{{0.f, -1.f, -10.f}}) * rotateX(M_PI);
+    glUniformMatrix4fv(glGetUniformLocation(m_characterPrgName, "modelViewMatrix"), 1, GL_FALSE, modelView.m);
+    glBindVertexArray(m_quadVAOName);
+    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
+    
+    glBindTexture(GL_TEXTURE_2D, smuggle_position);
+    glGenerateMipmap(GL_TEXTURE_2D);
+    
+    modelView = translate(vec3{{-1.f, -1.f, -10.f}}) * rotateX(M_PI);
+    glUniformMatrix4fv(glGetUniformLocation(m_characterPrgName, "modelViewMatrix"), 1, GL_FALSE, modelView.m);
+    glBindVertexArray(m_quadVAOName);
+    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
     
     
     GetGLError();
 	
 	// Update the angle so our character keeps spinning
-	//m_characterAngle++;
+	m_characterAngle++;
 }
 
 static GLsizei GetGLTypeSize(GLenum type)
@@ -322,11 +348,12 @@ GLuint renderer_impl::buildFBOWithWidthAndHeight(GLuint width, GLuint height)
 {
 	GLuint fboName;
 	
-	GLuint colorTexture, colorTexture2;
+	GLuint colorTexture, colorTexture2, colorTexture3;
 	
 	// Create a texture object to apply to model
 	glGenTextures(1, &colorTexture);
 	glBindTexture(GL_TEXTURE_2D, colorTexture);
+	smuggle_color = colorTexture;
 	
 	// Set up filter and wrap modes for this texture object
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -345,7 +372,26 @@ GLuint renderer_impl::buildFBOWithWidthAndHeight(GLuint width, GLuint height)
 	glGenTextures(1, &colorTexture2);
 	glBindTexture(GL_TEXTURE_2D, colorTexture2);
     
-    smuggle = colorTexture;
+    smuggle_normal = colorTexture2;
+	
+	// Set up filter and wrap modes for this texture object
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	
+	
+    // Allocate a texture image with which we can render to
+	// Pass NULL for the data parameter since we don't need to load image data.
+	//     We will be generating the image by rendering to this texture
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
+				 width, height, 0,
+				 GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+	
+    // Create a texture object to apply to model
+	glGenTextures(1, &colorTexture3);
+	glBindTexture(GL_TEXTURE_2D, colorTexture3);
+	smuggle_position = colorTexture3;
 	
 	// Set up filter and wrap modes for this texture object
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -359,7 +405,10 @@ GLuint renderer_impl::buildFBOWithWidthAndHeight(GLuint width, GLuint height)
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
 				 width, height, 0,
 				 GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-	
+
+    
+    
+    
     /*
 	GLuint depthRenderbuffer;
 	glGenRenderbuffers(1, &depthRenderbuffer);
@@ -372,7 +421,7 @@ GLuint renderer_impl::buildFBOWithWidthAndHeight(GLuint width, GLuint height)
 	glGenTextures(1, &depthTexture);
 	glBindTexture(GL_TEXTURE_2D, depthTexture);
     
-    smuggle = depthTexture;
+    smuggle_depth = depthTexture;
 	
 	// Set up filter and wrap modes for this texture object
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -391,6 +440,7 @@ GLuint renderer_impl::buildFBOWithWidthAndHeight(GLuint width, GLuint height)
 	glBindFramebuffer(GL_FRAMEBUFFER, fboName);	
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, colorTexture, 0);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, colorTexture2, 0);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, colorTexture3, 0);
 	//glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthRenderbuffer);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthTexture, 0);
 	
@@ -406,11 +456,20 @@ GLuint renderer_impl::buildFBOWithWidthAndHeight(GLuint width, GLuint height)
 	return fboName;
 }
 
-program* renderer_impl::buildProgram(string* vertexSource, string* fragmentSource)
-{
-	// Determine if GLSL version 140 is supported by this context.
-	//  We'll use this info to generate a GLSL shader source string  
-	//  with the proper version preprocessor string prepended
+
+
+program* renderer_impl::buildProgramFromFile(string s) {
+    NSString* filePathName = [[NSBundle mainBundle]
+                              pathForResource:[NSString
+                                               stringWithUTF8String:s.c_str()]
+                              ofType:@"vsh"];
+    string vertexSource = load([filePathName UTF8String]);
+    filePathName = [[NSBundle mainBundle]
+                    pathForResource:[NSString
+                                     stringWithUTF8String:s.c_str()]
+                    ofType:@"fsh"];
+    string fragmentSource = load([filePathName UTF8String]);
+
 	double glLanguageVersion;
 	
     glLanguageVersion = atof((char*) glGetString(GL_SHADING_LANGUAGE_VERSION));
@@ -425,8 +484,8 @@ program* renderer_impl::buildProgram(string* vertexSource, string* fragmentSourc
 	stringstream ss;
     ss << "#version " << version << endl;
 
-    shader vs{GL_VERTEX_SHADER, vector<string>{ss.str(), *vertexSource}};
-    shader fs{GL_FRAGMENT_SHADER, vector<string>{ss.str(), *fragmentSource}};
+    shader vs{GL_VERTEX_SHADER, vector<string>{ss.str(), vertexSource}};
+    shader fs{GL_FRAGMENT_SHADER, vector<string>{ss.str(), fragmentSource}};
     
     program& prgName = *(new program); // explicitly leak it for now
     
@@ -437,7 +496,10 @@ program* renderer_impl::buildProgram(string* vertexSource, string* fragmentSourc
     prgName.bindAttrib(TEXCOORD_ATTRIB_IDX, "inTexcoord");
     
     prgName.bindFrag(0, "outColor");
-    prgName.bindFrag(1, "outNormal");
+    prgName.bindFrag(1, "outPosition");
+    prgName.bindFrag(2, "outNormal");
+    
+    glDisable(GL_BLEND);
     
     prgName.link().validate().use();
 	

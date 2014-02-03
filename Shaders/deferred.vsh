@@ -14,6 +14,6 @@ void main (void)
 {
     varPosition = modelViewMatrix * inPosition;
 	gl_Position	= projectionMatrix * varPosition;
-    varNormal = inverseTransposeModelViewMatrix * inNormal; // Caution -- what does last element get padded with?
+    varNormal = inverseTransposeModelViewMatrix * vec4(inNormal.xyz, 0); // Caution -- what does last element get padded with?
     varTexcoord = inTexcoord;
 }

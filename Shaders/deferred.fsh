@@ -12,5 +12,5 @@ void main (void)
 {
 	outColor    = texture(diffuseTexture, varTexcoord.st, 0.0);
     outPosition = varPosition;
-    outNormal   = varNormal;
+    outNormal   = vec4(varNormal.xyz, 1);
 }
