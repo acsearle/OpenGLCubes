@@ -19,9 +19,11 @@
 #include <string>
 #include <vector>
 
+#include "framebuffer.h"
 #include "model.h"
 #include "program.h"
 #include "shader.h"
+#include "texture.h"
 #include "vao.h"
 
 using namespace std;
@@ -34,17 +36,15 @@ using namespace std;
 
 //@implementation OpenGLRenderer
 
-class program;
-class framebuffer;
 
 class renderer_impl : public renderer
 {
 public:
     GLuint m_defaultFBOName;
     
-    GLuint m_characterPrgName;
+    shared_ptr<program> m_characterPrg;
     unique_ptr<vao> m_characterVAO;
-    GLuint m_characterTexName;
+    shared_ptr<texture2d> m_characterTex;
     GLfloat m_characterAngle;
     unique_ptr<framebuffer> m_deferredFBO;
     unique_ptr<vao> m_quadVAO;
@@ -54,11 +54,11 @@ public:
     
     virtual void resizeWithWidthAndHeight(GLuint width, GLuint height);
     virtual void render();
-    virtual void dealloc();
+
     void destroyFBO(GLuint fboName);
     void deleteFBOAttachment(GLenum attachment);
     unique_ptr<framebuffer> buildFBOWithWidthAndHeight(GLuint width, GLuint height);
-    GLuint buildTexture(demoImage* image);
+    unique_ptr<texture2d> buildTexture(demoImage* image);
     
     unique_ptr<program> buildProgramFromFile(string);
 
@@ -113,7 +113,7 @@ renderer* renderer::initWithDefaultFBO(GLuint defaultFBOName)
 		demoImage *image = imgLoadImage([filePathName cStringUsingEncoding:NSASCIIStringEncoding], false);
 		
 		// Build a texture object with our image data
-		self->m_characterTexName = self->buildTexture(image);
+		self->m_characterTex = self->buildTexture(image);
 		
 		// We can destroy the image once it's loaded into GL
 		imgDestroyImage(image);
@@ -128,9 +128,9 @@ renderer* renderer::initWithDefaultFBO(GLuint defaultFBOName)
         string vtxSource, frgSource;
 		
 		// Build Program
-		self->m_characterPrgName = *self->buildProgramFromFile("deferred");
+		self->m_characterPrg = self->buildProgramFromFile("deferred");
 		
-        self->m_deferredFBO = self->buildFBOWithWidthAndHeight(1000, 1000);
+        self->m_deferredFBO = self->buildFBOWithWidthAndHeight(100, 100);
         
 		////////////////////////////////////////////////
 		// Set up OpenGL state that will never change //
@@ -168,83 +168,12 @@ void renderer_impl::resizeWithWidthAndHeight(GLuint width, GLuint height)
 
 	m_viewWidth = width;
 	m_viewHeight = height;
+    
+    // rebuild the backing render target
+    m_deferredFBO = buildFBOWithWidthAndHeight(width, height);
+    
 }
 
-
-
-class texture : public named
-{
-public:
-    texture() {
-        glGenTextures(1, &name_);
-    }
-    ~texture() {
-        glDeleteTextures(1, &name_);
-    }
-};
-
-class texture2d : public texture {
-public:
-    texture2d(GLsizei width, GLsizei height, GLenum format, GLenum type) {
-        bind();
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-        glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, type, NULL);
-    }
-    texture2d& bind() {
-        glBindTexture(GL_TEXTURE_2D, name_);
-        return *this;
-    }
-    texture2d& generateMipmap() {
-        glGenerateMipmap(GL_TEXTURE_2D);
-        return *this;
-    }
-};
-
-class framebuffer : public named {
-public:
-
-    vector<shared_ptr<texture2d>> color_attachment;
-    shared_ptr<texture2d> depth_attachment;
-    
-    framebuffer() {
-        glGenFramebuffers(1, &name_);
-        GLint maxColorAttachments;
-        glGetIntegerv(GL_MAX_COLOR_ATTACHMENTS, &maxColorAttachments);
-        color_attachment.resize(maxColorAttachments);
-    }
-    
-    ~framebuffer() {
-        glDeleteFramebuffers(1, &name_);
-    }
-    
-    framebuffer& bind() {
-        glBindFramebuffer(GL_FRAMEBUFFER, name_);
-        return *this;
-    }
-    
-    framebuffer& validate() {
-        GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
-        if (status != GL_FRAMEBUFFER_COMPLETE) {
-            NSLog(@"Framebuffer is incomplete: %x", status);
-        }
-        return *this;
-    }
-    
-    framebuffer& attach_color(GLuint index, shared_ptr<texture2d> t) {
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + index, GL_TEXTURE_2D, *t, 0);
-        color_attachment[index] = t;
-        return *this;
-    }
-    framebuffer& attach_depth(shared_ptr<texture2d> t) {
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, *t, 0);
-        depth_attachment = t;
-        return *this;
-    }
-    
-};
 
 
 void renderer_impl::render() {
@@ -254,7 +183,7 @@ void renderer_impl::render() {
     mat4 mvp;
 	
 	// Use the program for rendering our character
-	glUseProgram(m_characterPrgName);
+	m_characterPrg->use();
 	
 	// Calculate the projection matrix
 	//mtxLoadPerspective(projection, 90, (float)m_viewWidth / (float)m_viewHeight,5.0,10000);
@@ -278,22 +207,19 @@ void renderer_impl::render() {
 	// that we calculated above
 
 	
-    glUniformMatrix4fv(glGetUniformLocation(m_characterPrgName, "modelViewMatrix"), 1, GL_FALSE, modelView.m);
-    glUniformMatrix4fv(glGetUniformLocation(m_characterPrgName, "projectionMatrix"), 1, GL_FALSE, projection.m);
-	glUniformMatrix4fv(glGetUniformLocation(m_characterPrgName, "inverseTransposeModelViewMatrix"), 1, GL_FALSE, inverseTransposeModelView.m);
+    glUniformMatrix4fv(glGetUniformLocation(*m_characterPrg, "modelViewMatrix"), 1, GL_FALSE, modelView.m);
+    glUniformMatrix4fv(glGetUniformLocation(*m_characterPrg, "projectionMatrix"), 1, GL_FALSE, projection.m);
+	glUniformMatrix4fv(glGetUniformLocation(*m_characterPrg, "inverseTransposeModelViewMatrix"), 1, GL_FALSE, inverseTransposeModelView.m);
 
     //glBindFramebuffer(GL_FRAMEBUFFER, m_deferredFBO);
     m_deferredFBO->bind();
     glClearColor(0,0,1,0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glClearColor(0,1,0,0);
-    glBindTexture(GL_TEXTURE_2D, m_characterTexName);
+    glBindTexture(GL_TEXTURE_2D, *m_characterTex);
     glBindVertexArray(*m_characterVAO);
     GLenum bufs[] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2 };
-    GetGLError();
     glDrawBuffers(3, bufs);
-    GetGLError();
-    //glDrawElements(GL_TRIANGLES, m_characterVAO->count_, GL_UNSIGNED_SHORT, 0);
     m_characterVAO->draw();
     
     // Bind our default FBO to render to the screen
@@ -301,24 +227,24 @@ void renderer_impl::render() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     // Draw quads textured with the other framebuffer's attachments
-    m_deferredFBO->color_attachment[0]->bind().generateMipmap();
+    m_deferredFBO->color_attachment[0]->bind();
     modelView = translate(vec3{{0.f, 1.f, -3.f}}) * rotateX(M_PI);
-    glUniformMatrix4fv(glGetUniformLocation(m_characterPrgName, "modelViewMatrix"), 1, GL_FALSE, modelView.m);
+    glUniformMatrix4fv(glGetUniformLocation(*m_characterPrg, "modelViewMatrix"), 1, GL_FALSE, modelView.m);
     m_quadVAO->bind().draw();
 
-    m_deferredFBO->color_attachment[1]->bind().generateMipmap();
+    m_deferredFBO->color_attachment[1]->bind();
     modelView = translate(vec3{{-1.f, 1.f, -3.f}}) * rotateX(M_PI);
-    glUniformMatrix4fv(glGetUniformLocation(m_characterPrgName, "modelViewMatrix"), 1, GL_FALSE, modelView.m);
+    glUniformMatrix4fv(glGetUniformLocation(*m_characterPrg, "modelViewMatrix"), 1, GL_FALSE, modelView.m);
     m_quadVAO->bind().draw();
     
-    m_deferredFBO->color_attachment[2]->bind().generateMipmap();
+    m_deferredFBO->color_attachment[2]->bind();
     modelView = translate(vec3{{0.f, -0.f, -3.f}}) * rotateX(M_PI);
-    glUniformMatrix4fv(glGetUniformLocation(m_characterPrgName, "modelViewMatrix"), 1, GL_FALSE, modelView.m);
+    glUniformMatrix4fv(glGetUniformLocation(*m_characterPrg, "modelViewMatrix"), 1, GL_FALSE, modelView.m);
     m_quadVAO->bind().draw();
     
-    m_deferredFBO->depth_attachment->bind().generateMipmap();
+    m_deferredFBO->depth_attachment->bind();
     modelView = translate(vec3{{-1.f, -0.f, -3.f}}) * rotateX(M_PI);
-    glUniformMatrix4fv(glGetUniformLocation(m_characterPrgName, "modelViewMatrix"), 1, GL_FALSE, modelView.m);
+    glUniformMatrix4fv(glGetUniformLocation(*m_characterPrg, "modelViewMatrix"), 1, GL_FALSE, modelView.m);
     m_quadVAO->bind().draw();
     
     
@@ -350,9 +276,10 @@ static GLsizei GetGLTypeSize(GLenum type)
 }
 
 
-GLuint renderer_impl::buildTexture(demoImage* image)
+unique_ptr<texture2d> renderer_impl::buildTexture(demoImage* image)
 {
-	GLuint texName;
+    auto texName = unique_ptr<texture2d>{new texture2d{image->width, image->height, image->format, image->type}};
+	/*GLuint texName;
 	
 	// Create a texture object to apply to model
 	glGenTextures(1, &texName);
@@ -363,7 +290,7 @@ GLuint renderer_impl::buildTexture(demoImage* image)
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-	
+	*/
 	// Indicate that pixel rows are tightly packed 
 	//  (defaults to stride of 4 which is kind of only good for
 	//  RGBA or FLOAT data types)
@@ -374,7 +301,8 @@ GLuint renderer_impl::buildTexture(demoImage* image)
 				 image->format, image->type, image->data);
 
 	// Create mipmaps for this texture for better image quality
-	glGenerateMipmap(GL_TEXTURE_2D);
+	//glGenerateMipmap(GL_TEXTURE_2D);
+    texName->generateMipmap();
 	
 	GetGLError();
 	
@@ -463,23 +391,6 @@ unique_ptr<program> renderer_impl::buildProgramFromFile(string s) {
 	
 	return prgName;
 	
-}
-
-
-void renderer_impl::dealloc()
-{
-	
-	// Cleanup all OpenGL objects and 
-	glDeleteTextures(1, &m_characterTexName);
-		
-	//[self destroyVAO:m_characterVAOName];
-
-	glDeleteProgram(m_characterPrgName);
-
-	//mdlDestroyModel(m_characterModel);
-
-	
-	//[super dealloc];
 }
 
 

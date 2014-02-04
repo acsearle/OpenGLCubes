@@ -26,18 +26,15 @@
 		3A4554AB14BE325400837CC3 /* GLEssentialsGLView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 3A4554A714BE1FE300837CC3 /* GLEssentialsGLView.mm */; };
 		8D11072D0486CEB800E47090 /* main.mm in Sources */ = {isa = PBXBuildFile; fileRef = 29B97316FDCFA39411CA2CEA /* main.mm */; settings = {ATTRIBUTES = (); }; };
 		8D11072F0486CEB800E47090 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */; };
-		CA6C439F189F66E00044121D /* textured.vsh in Sources */ = {isa = PBXBuildFile; fileRef = CA6C439E189F66E00044121D /* textured.vsh */; };
 		CA6C43A0189F66F60044121D /* textured.vsh in Resources */ = {isa = PBXBuildFile; fileRef = CA6C439E189F66E00044121D /* textured.vsh */; };
-		CA6C43A2189F6B850044121D /* textured.fsh in Sources */ = {isa = PBXBuildFile; fileRef = CA6C43A1189F6B850044121D /* textured.fsh */; };
 		CA6C43A618A072220044121D /* texture.mm in Sources */ = {isa = PBXBuildFile; fileRef = CA6C43A418A072220044121D /* texture.mm */; };
+		CA6C43A918A073100044121D /* framebuffer.mm in Sources */ = {isa = PBXBuildFile; fileRef = CA6C43A718A073100044121D /* framebuffer.mm */; };
 		CAF4BB49189F5C8A00C73117 /* GLKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CAF4BB48189F5C8A00C73117 /* GLKit.framework */; };
 		CAF4BB52189F5CD100C73117 /* model.mm in Sources */ = {isa = PBXBuildFile; fileRef = CAF4BB4B189F5CD100C73117 /* model.mm */; };
 		CAF4BB53189F5CD100C73117 /* program.mm in Sources */ = {isa = PBXBuildFile; fileRef = CAF4BB4D189F5CD100C73117 /* program.mm */; };
 		CAF4BB54189F5CD100C73117 /* shader.mm in Sources */ = {isa = PBXBuildFile; fileRef = CAF4BB4F189F5CD100C73117 /* shader.mm */; };
 		CAF4BB55189F5CD100C73117 /* vao.mm in Sources */ = {isa = PBXBuildFile; fileRef = CAF4BB51189F5CD100C73117 /* vao.mm */; };
-		CAF4BB57189F5F8100C73117 /* deferred.vsh in Sources */ = {isa = PBXBuildFile; fileRef = CAF4BB56189F5F8100C73117 /* deferred.vsh */; };
 		CAF4BB58189F5FBE00C73117 /* deferred.vsh in Resources */ = {isa = PBXBuildFile; fileRef = CAF4BB56189F5F8100C73117 /* deferred.vsh */; };
-		CAF4BB5A189F603700C73117 /* deferred.fsh in Sources */ = {isa = PBXBuildFile; fileRef = CAF4BB59189F603700C73117 /* deferred.fsh */; };
 		CAF4BB5B189F609000C73117 /* deferred.fsh in Resources */ = {isa = PBXBuildFile; fileRef = CAF4BB59189F603700C73117 /* deferred.fsh */; };
 /* End PBXBuildFile section */
 
@@ -81,6 +78,8 @@
 		CA6C43A318A051CB0044121D /* named.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = named.h; path = Classes/named.h; sourceTree = "<group>"; };
 		CA6C43A418A072220044121D /* texture.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = texture.mm; path = Classes/texture.mm; sourceTree = "<group>"; };
 		CA6C43A518A072220044121D /* texture.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = texture.h; path = Classes/texture.h; sourceTree = "<group>"; };
+		CA6C43A718A073100044121D /* framebuffer.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = framebuffer.mm; sourceTree = "<group>"; };
+		CA6C43A818A073100044121D /* framebuffer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = framebuffer.h; sourceTree = "<group>"; };
 		CAF4BB48189F5C8A00C73117 /* GLKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = GLKit.framework; path = System/Library/Frameworks/GLKit.framework; sourceTree = SDKROOT; };
 		CAF4BB4A189F5CD100C73117 /* model.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = model.h; path = Classes/model.h; sourceTree = "<group>"; };
 		CAF4BB4B189F5CD100C73117 /* model.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = model.mm; path = Classes/model.mm; sourceTree = "<group>"; };
@@ -112,25 +111,27 @@
 		080E96DDFE201D6D7F000001 /* Classes */ = {
 			isa = PBXGroup;
 			children = (
-				CAF4BB4A189F5CD100C73117 /* model.h */,
-				CAF4BB4B189F5CD100C73117 /* model.mm */,
-				CAF4BB4C189F5CD100C73117 /* program.h */,
-				CAF4BB4D189F5CD100C73117 /* program.mm */,
-				CAF4BB4E189F5CD100C73117 /* shader.h */,
-				CAF4BB4F189F5CD100C73117 /* shader.mm */,
-				CAF4BB50189F5CD100C73117 /* vao.h */,
-				CAF4BB51189F5CD100C73117 /* vao.mm */,
-				3A4554A614BE1FE300837CC3 /* GLEssentialsGLView.h */,
-				3A4554A714BE1FE300837CC3 /* GLEssentialsGLView.mm */,
 				3A0BF478177BC80300A6C4D7 /* GLEssentialsFullscreenWindow.h */,
 				3A0BF479177BC80300A6C4D7 /* GLEssentialsFullscreenWindow.mm */,
+				3A4554A614BE1FE300837CC3 /* GLEssentialsGLView.h */,
+				3A4554A714BE1FE300837CC3 /* GLEssentialsGLView.mm */,
 				3A0BF470177B8C1F00A6C4D7 /* GLEssentialsWindowController.h */,
 				3A0BF471177B8C1F00A6C4D7 /* GLEssentialsWindowController.mm */,
 				3A1598D611B9DDC5001E7AB5 /* OpenGLRenderer.h */,
 				3A1598D511B9DDC5001E7AB5 /* OpenGLRenderer.mm */,
+				CA6C43A718A073100044121D /* framebuffer.mm */,
+				CA6C43A818A073100044121D /* framebuffer.h */,
+				CAF4BB4A189F5CD100C73117 /* model.h */,
+				CAF4BB4B189F5CD100C73117 /* model.mm */,
+				CA6C43A318A051CB0044121D /* named.h */,
+				CAF4BB4C189F5CD100C73117 /* program.h */,
+				CAF4BB4D189F5CD100C73117 /* program.mm */,
+				CAF4BB4E189F5CD100C73117 /* shader.h */,
+				CAF4BB4F189F5CD100C73117 /* shader.mm */,
 				CA6C43A518A072220044121D /* texture.h */,
 				CA6C43A418A072220044121D /* texture.mm */,
-				CA6C43A318A051CB0044121D /* named.h */,
+				CAF4BB50189F5CD100C73117 /* vao.h */,
+				CAF4BB51189F5CD100C73117 /* vao.mm */,
 			);
 			name = Classes;
 			sourceTree = "<group>";
@@ -178,19 +179,19 @@
 		29B97315FDCFA39411CA2CEA /* Other Sources */ = {
 			isa = PBXGroup;
 			children = (
+				256AC3F00F4B6AF500CF3369 /* OSXGLEssentials_Prefix.pch */,
+				3A1598CD11B9DDB0001E7AB5 /* glUtil.h */,
+				3A1598CB11B9DDB0001E7AB5 /* imageUtil.mm */,
+				3A1598CC11B9DDB0001E7AB5 /* imageUtil.h */,
+				29B97316FDCFA39411CA2CEA /* main.mm */,
+				3A1598CA11B9DDB0001E7AB5 /* matrixUtil.mm */,
+				3A1598C911B9DDB0001E7AB5 /* matrixUtil.h */,
+				3A1598C811B9DDB0001E7AB5 /* modelUtil.mm */,
+				3A1598C711B9DDB0001E7AB5 /* modelUtil.h */,
 				3A349C9112CAEA1100B73A51 /* sourceUtil.mm */,
 				3A1598C511B9DDB0001E7AB5 /* sourceUtil.h */,
 				3A1598C411B9DDB0001E7AB5 /* vectorUtil.mm */,
 				3A1598C311B9DDB0001E7AB5 /* vectorUtil.h */,
-				3A1598C811B9DDB0001E7AB5 /* modelUtil.mm */,
-				3A1598C711B9DDB0001E7AB5 /* modelUtil.h */,
-				3A1598CA11B9DDB0001E7AB5 /* matrixUtil.mm */,
-				3A1598C911B9DDB0001E7AB5 /* matrixUtil.h */,
-				3A1598CB11B9DDB0001E7AB5 /* imageUtil.mm */,
-				3A1598CC11B9DDB0001E7AB5 /* imageUtil.h */,
-				3A1598CD11B9DDB0001E7AB5 /* glUtil.h */,
-				256AC3F00F4B6AF500CF3369 /* OSXGLEssentials_Prefix.pch */,
-				29B97316FDCFA39411CA2CEA /* main.mm */,
 			);
 			name = "Other Sources";
 			sourceTree = "<group>";
@@ -303,21 +304,18 @@
 			buildActionMask = 2147483647;
 			files = (
 				8D11072D0486CEB800E47090 /* main.mm in Sources */,
-				CAF4BB57189F5F8100C73117 /* deferred.vsh in Sources */,
 				3A0BF47A177BC80300A6C4D7 /* GLEssentialsFullscreenWindow.mm in Sources */,
 				3A1598CE11B9DDB0001E7AB5 /* vectorUtil.mm in Sources */,
-				CA6C43A2189F6B850044121D /* textured.fsh in Sources */,
+				CA6C43A918A073100044121D /* framebuffer.mm in Sources */,
 				CAF4BB54189F5CD100C73117 /* shader.mm in Sources */,
 				CAF4BB55189F5CD100C73117 /* vao.mm in Sources */,
 				3A1598D011B9DDB0001E7AB5 /* modelUtil.mm in Sources */,
 				3A0BF472177B8C1F00A6C4D7 /* GLEssentialsWindowController.mm in Sources */,
 				CA6C43A618A072220044121D /* texture.mm in Sources */,
-				CA6C439F189F66E00044121D /* textured.vsh in Sources */,
 				3A1598D111B9DDB0001E7AB5 /* matrixUtil.mm in Sources */,
 				CAF4BB52189F5CD100C73117 /* model.mm in Sources */,
 				3A1598D211B9DDB0001E7AB5 /* imageUtil.mm in Sources */,
 				3A1598DB11B9DDC5001E7AB5 /* OpenGLRenderer.mm in Sources */,
-				CAF4BB5A189F603700C73117 /* deferred.fsh in Sources */,
 				3A349C9212CAEA1100B73A51 /* sourceUtil.mm in Sources */,
 				CAF4BB53189F5CD100C73117 /* program.mm in Sources */,
 				3A4554AB14BE325400837CC3 /* GLEssentialsGLView.mm in Sources */,

@@ -36,7 +36,8 @@ public:
     vao& draw();
 private:
     GLsizei count_;
-    std::vector<std::unique_ptr<vbo>> buffers_;
+    std::vector<std::shared_ptr<vbo>> attrib;
+    std::shared_ptr<vbo> elemen;
 };
 
 

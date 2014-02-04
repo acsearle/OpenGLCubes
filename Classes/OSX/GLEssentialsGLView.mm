@@ -17,11 +17,11 @@ renderer* m_renderer;
 	// There is no autorelease pool when this method is called
 	// because it will be called from a background thread.
 	// It's important to create one or app can leak objects.
-	//NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+	NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
 	
 	[self drawView];
 	
-	//[pool release];
+	[pool release];
 	return kCVReturnSuccess;
 }
 

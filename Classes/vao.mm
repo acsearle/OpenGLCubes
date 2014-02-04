@@ -12,26 +12,28 @@
 using namespace std;
 
 vao::vao(model& m) : count_(m.elements.size()) {
-    
-    
     glGenVertexArrays(1, &name_);
     bind();
+
+    GLuint maxVertexAttribs;
+    glGetIntegerv(GL_MAX_VERTEX_ATTRIBS, (GLint*) &maxVertexAttribs);
+    attrib.resize(maxVertexAttribs);
     
-    buffers_.push_back(unique_ptr<vbo>(new vbo(GL_ARRAY_BUFFER, GL_STATIC_DRAW, m.vertex.begin(), m.vertex.end())));
+    attrib[POS_ATTRIB_IDX] = shared_ptr<vbo>(new vbo(GL_ARRAY_BUFFER, GL_STATIC_DRAW, m.vertex.begin(), m.vertex.end()));
     glEnableVertexAttribArray(POS_ATTRIB_IDX);
     glVertexAttribPointer(POS_ATTRIB_IDX, 3, GL_FLOAT, GL_FALSE, sizeof(vec3), BUFFER_OFFSET(0));
     
     
-    buffers_.push_back(unique_ptr<vbo>(new vbo(GL_ARRAY_BUFFER, GL_STATIC_DRAW, m.normal.begin(), m.normal.end())));
+    attrib[NORMAL_ATTRIB_IDX] = shared_ptr<vbo>(new vbo(GL_ARRAY_BUFFER, GL_STATIC_DRAW, m.normal.begin(), m.normal.end()));
     glEnableVertexAttribArray(NORMAL_ATTRIB_IDX);
     glVertexAttribPointer(NORMAL_ATTRIB_IDX, 3, GL_FLOAT, GL_FALSE, sizeof(vec3), BUFFER_OFFSET(0));
     
     
-    buffers_.push_back(unique_ptr<vbo>(new vbo(GL_ARRAY_BUFFER, GL_STATIC_DRAW, m.texcoord.begin(), m.texcoord.end())));
+    attrib[TEXCOORD_ATTRIB_IDX] = shared_ptr<vbo>(new vbo(GL_ARRAY_BUFFER, GL_STATIC_DRAW, m.texcoord.begin(), m.texcoord.end()));
     glEnableVertexAttribArray(TEXCOORD_ATTRIB_IDX);
     glVertexAttribPointer(TEXCOORD_ATTRIB_IDX, 2, GL_FLOAT, GL_FALSE, sizeof(vec2), BUFFER_OFFSET(0));
     
-    buffers_.push_back(unique_ptr<vbo>(new vbo(GL_ELEMENT_ARRAY_BUFFER, GL_STATIC_DRAW, m.elements.begin(), m.elements.end())));
+    elemen = shared_ptr<vbo>(new vbo(GL_ELEMENT_ARRAY_BUFFER, GL_STATIC_DRAW, m.elements.begin(), m.elements.end()));
     
     GetGLError();
     

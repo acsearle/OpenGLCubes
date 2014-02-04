@@ -18,6 +18,6 @@ public:
     static renderer* initWithDefaultFBO(GLuint defaultFBOName);
     virtual void resizeWithWidthAndHeight(GLuint width, GLuint height) = 0;
     virtual void render() = 0;
-    virtual void dealloc() = 0;
+
 };
 
