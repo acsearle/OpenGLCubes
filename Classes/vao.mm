@@ -7,11 +7,11 @@
 //
 #include "glUtil.h"
 #include "vao.h"
-#include "OpenGLRenderer.h"
+#include "renderer.h"
 
 using namespace std;
 
-vao::vao(model& m) : count_(m.elements.size()) {
+vao::vao(mesh& m) : count_(m.elements.size()) {
     glGenVertexArrays(1, &name_);
     bind();
 

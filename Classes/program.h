@@ -12,6 +12,7 @@
 #include <OpenGL/OpenGL.h>
 #include <string>
 
+#include "mat.h"
 #include "named.h"
 #include "shader.h"
 
@@ -32,6 +33,24 @@ public:
     program& link();
     program& validate();
     program& use();
+    
+    // Proxy class to enable assignment to shader uniforms
+    
+    class uniform {
+        GLint location_;
+    public:
+        explicit uniform(GLint location) : location_(location) {}
+        void operator=(mat3 a) {
+            glUniformMatrix3fv(location_, 1, GL_FALSE, a.m);
+        }
+        void operator=(mat4 a) {
+            glUniformMatrix4fv(location_, 1, GL_FALSE, a.m);
+        }
+    };
+    
+    uniform operator[](const GLchar* name) {
+        return uniform(glGetUniformLocation(name_, name));
+    }
     
 };
 

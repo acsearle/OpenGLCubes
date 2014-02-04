@@ -12,26 +12,26 @@
 #include <iostream>
 
 #include <vector>
-#include "vectorUtil.h"
-#include "matrixUtil.h"
+#include "vec.h"
+#include "mat.h"
 
 
-class model {
+class mesh {
 public:
     std::vector<vec3> vertex;
     std::vector<vec3> normal;
     std::vector<vec2> texcoord;
     std::vector<GLshort> elements;
     
-    static model quad();
+    static mesh quad();
     
-    void append(model m);
+    void append(mesh m);
     
     void apply(mat4 a);
     
     
     
-    static model voxel();
+    static mesh voxel();
 };
 
 

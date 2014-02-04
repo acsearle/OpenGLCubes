@@ -6,11 +6,11 @@
 #import <GLKit/GLKit.h>
 
 
-#import "OpenGLRenderer.h"
-#import "matrixUtil.h"
+#import "renderer.h"
+#import "mat.h"
 #import "imageUtil.h"
-#import "sourceUtil.h"
-#import "vectorUtil.h"
+#import "source.h"
+#import "vec.h"
 
 
 #include <iostream>
@@ -20,7 +20,7 @@
 #include <vector>
 
 #include "framebuffer.h"
-#include "model.h"
+#include "mesh.h"
 #include "program.h"
 #include "shader.h"
 #include "texture.h"
@@ -97,10 +97,10 @@ renderer* renderer::initWithDefaultFBO(GLuint defaultFBOName)
 		NSString* filePathName = nil;
         
         
-        auto m = model::voxel();
+        auto m = mesh::voxel();
         self->m_characterVAO = unique_ptr<vao>(new vao(m));
         
-        auto n = model::quad();
+        auto n = mesh::quad();
         self->m_quadVAO = unique_ptr<vao>(new vao(n));
         
 		
@@ -228,8 +228,9 @@ void renderer_impl::render() {
 
     // Draw quads textured with the other framebuffer's attachments
     m_deferredFBO->color_attachment[0]->bind();
-    modelView = translate(vec3{{0.f, 1.f, -3.f}}) * rotateX(M_PI);
-    glUniformMatrix4fv(glGetUniformLocation(*m_characterPrg, "modelViewMatrix"), 1, GL_FALSE, modelView.m);
+    //modelView = translate(vec3{{0.f, 1.f, -3.f}}) * rotateX(M_PI);
+    //glUniformMatrix4fv(glGetUniformLocation(*m_characterPrg, "modelViewMatrix"), 1, GL_FALSE, modelView.m);
+    (*m_characterPrg)["modelViewMatrix"] = translate(vec3{{0.f, 1.f, -3.f}}) * rotateX(M_PI);
     m_quadVAO->bind().draw();
 
     m_deferredFBO->color_attachment[1]->bind();

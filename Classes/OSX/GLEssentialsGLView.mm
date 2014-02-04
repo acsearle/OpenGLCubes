@@ -1,6 +1,6 @@
 
 #import "GLEssentialsGLView.h"
-#import "OpenGLRenderer.h"
+#import "renderer.h"
 
 @interface GLEssentialsGLView (PrivateMethods)
 - (void) initGL;

@@ -20,7 +20,7 @@
 
 #import <GLKit/GLKit.h>
 
-#include "vectorUtil.h"
+#include "vec.h"
 
 typedef GLKMatrix3 mat3;
 typedef GLKMatrix4 mat4;

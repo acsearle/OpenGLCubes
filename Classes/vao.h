@@ -11,7 +11,7 @@
 
 #import <OpenGL/OpenGL.h>
 #include <OpenGL/gl3.h>
-#include "model.h"
+#include "mesh.h"
 #include "named.h"
 
 
@@ -30,7 +30,7 @@ public:
 
 class vao : public named {
 public:
-    explicit vao(model& m);
+    explicit vao(mesh& m);
     vao& bind();
     ~vao();
     vao& draw();
