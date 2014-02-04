@@ -12,18 +12,31 @@
 #import <OpenGL/OpenGL.h>
 #include <OpenGL/gl3.h>
 #include "model.h"
+#include "named.h"
 
-template<typename I> void vbo(GLenum target, GLenum usage, I b, I e) {
-    GLuint name;
-    glGenBuffers(1, &name);
-    glBindBuffer(target, name);
-    glBufferData(target, (char*) &*e - (char*) &*b, &*b, usage);
-}
 
-struct vao {
-    GLuint name;
+class vbo : public named
+{
+public:
+    template<typename I> vbo(GLenum target, GLenum usage, I b, I e) {
+        glGenBuffers(1, &name_);
+        glBindBuffer(target, name_);
+        glBufferData(target, (char*) &*e - (char*) &*b, &*b, usage);
+    }
+    ~vbo() {
+        glDeleteBuffers(1, &name_);
+    }
+};
+
+class vao : public named {
+public:
     explicit vao(model& m);
+    vao& bind();
     ~vao();
+    vao& draw();
+private:
+    GLsizei count_;
+    std::vector<std::unique_ptr<vbo>> buffers_;
 };
 
 

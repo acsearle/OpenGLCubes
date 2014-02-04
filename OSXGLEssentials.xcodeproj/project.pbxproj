@@ -29,6 +29,7 @@
 		CA6C439F189F66E00044121D /* textured.vsh in Sources */ = {isa = PBXBuildFile; fileRef = CA6C439E189F66E00044121D /* textured.vsh */; };
 		CA6C43A0189F66F60044121D /* textured.vsh in Resources */ = {isa = PBXBuildFile; fileRef = CA6C439E189F66E00044121D /* textured.vsh */; };
 		CA6C43A2189F6B850044121D /* textured.fsh in Sources */ = {isa = PBXBuildFile; fileRef = CA6C43A1189F6B850044121D /* textured.fsh */; };
+		CA6C43A618A072220044121D /* texture.mm in Sources */ = {isa = PBXBuildFile; fileRef = CA6C43A418A072220044121D /* texture.mm */; };
 		CAF4BB49189F5C8A00C73117 /* GLKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CAF4BB48189F5C8A00C73117 /* GLKit.framework */; };
 		CAF4BB52189F5CD100C73117 /* model.mm in Sources */ = {isa = PBXBuildFile; fileRef = CAF4BB4B189F5CD100C73117 /* model.mm */; };
 		CAF4BB53189F5CD100C73117 /* program.mm in Sources */ = {isa = PBXBuildFile; fileRef = CAF4BB4D189F5CD100C73117 /* program.mm */; };
@@ -77,6 +78,9 @@
 		8D1107310486CEB800E47090 /* OSXGLEssentials-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "OSXGLEssentials-Info.plist"; sourceTree = "<group>"; };
 		CA6C439E189F66E00044121D /* textured.vsh */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.glsl; name = textured.vsh; path = Shaders/textured.vsh; sourceTree = "<group>"; };
 		CA6C43A1189F6B850044121D /* textured.fsh */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.glsl; name = textured.fsh; path = Shaders/textured.fsh; sourceTree = "<group>"; };
+		CA6C43A318A051CB0044121D /* named.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = named.h; path = Classes/named.h; sourceTree = "<group>"; };
+		CA6C43A418A072220044121D /* texture.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = texture.mm; path = Classes/texture.mm; sourceTree = "<group>"; };
+		CA6C43A518A072220044121D /* texture.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = texture.h; path = Classes/texture.h; sourceTree = "<group>"; };
 		CAF4BB48189F5C8A00C73117 /* GLKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = GLKit.framework; path = System/Library/Frameworks/GLKit.framework; sourceTree = SDKROOT; };
 		CAF4BB4A189F5CD100C73117 /* model.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = model.h; path = Classes/model.h; sourceTree = "<group>"; };
 		CAF4BB4B189F5CD100C73117 /* model.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = model.mm; path = Classes/model.mm; sourceTree = "<group>"; };
@@ -86,7 +90,7 @@
 		CAF4BB4F189F5CD100C73117 /* shader.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = shader.mm; path = Classes/shader.mm; sourceTree = "<group>"; };
 		CAF4BB50189F5CD100C73117 /* vao.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = vao.h; path = Classes/vao.h; sourceTree = "<group>"; };
 		CAF4BB51189F5CD100C73117 /* vao.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = vao.mm; path = Classes/vao.mm; sourceTree = "<group>"; };
-		CAF4BB56189F5F8100C73117 /* deferred.vsh */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.glsl; name = deferred.vsh; path = Shaders/deferred.vsh; sourceTree = "<group>"; };
+		CAF4BB56189F5F8100C73117 /* deferred.vsh */ = {isa = PBXFileReference; explicitFileType = sourcecode.glsl; fileEncoding = 4; name = deferred.vsh; path = Shaders/deferred.vsh; sourceTree = "<group>"; };
 		CAF4BB59189F603700C73117 /* deferred.fsh */ = {isa = PBXFileReference; explicitFileType = sourcecode.glsl; fileEncoding = 4; name = deferred.fsh; path = Shaders/deferred.fsh; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -124,6 +128,9 @@
 				3A0BF471177B8C1F00A6C4D7 /* GLEssentialsWindowController.mm */,
 				3A1598D611B9DDC5001E7AB5 /* OpenGLRenderer.h */,
 				3A1598D511B9DDC5001E7AB5 /* OpenGLRenderer.mm */,
+				CA6C43A518A072220044121D /* texture.h */,
+				CA6C43A418A072220044121D /* texture.mm */,
+				CA6C43A318A051CB0044121D /* named.h */,
 			);
 			name = Classes;
 			sourceTree = "<group>";
@@ -304,6 +311,7 @@
 				CAF4BB55189F5CD100C73117 /* vao.mm in Sources */,
 				3A1598D011B9DDB0001E7AB5 /* modelUtil.mm in Sources */,
 				3A0BF472177B8C1F00A6C4D7 /* GLEssentialsWindowController.mm in Sources */,
+				CA6C43A618A072220044121D /* texture.mm in Sources */,
 				CA6C439F189F66E00044121D /* textured.vsh in Sources */,
 				3A1598D111B9DDB0001E7AB5 /* matrixUtil.mm in Sources */,
 				CAF4BB52189F5CD100C73117 /* model.mm in Sources */,

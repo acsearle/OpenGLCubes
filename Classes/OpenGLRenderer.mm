@@ -14,6 +14,7 @@
 
 
 #include <iostream>
+#include <map>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -34,6 +35,7 @@ using namespace std;
 //@implementation OpenGLRenderer
 
 class program;
+class framebuffer;
 
 class renderer_impl : public renderer
 {
@@ -41,12 +43,11 @@ public:
     GLuint m_defaultFBOName;
     
     GLuint m_characterPrgName;
-    GLuint m_characterVAOName;
+    unique_ptr<vao> m_characterVAO;
     GLuint m_characterTexName;
-    GLuint m_characterNumElements;
     GLfloat m_characterAngle;
-    GLuint m_deferredFBOName;
-    GLuint m_quadVAOName;
+    unique_ptr<framebuffer> m_deferredFBO;
+    unique_ptr<vao> m_quadVAO;
     
     GLuint m_viewWidth;
     GLuint m_viewHeight;
@@ -56,9 +57,10 @@ public:
     virtual void dealloc();
     void destroyFBO(GLuint fboName);
     void deleteFBOAttachment(GLenum attachment);
-    GLuint buildFBOWithWidthAndHeight(GLuint width, GLuint height);
+    unique_ptr<framebuffer> buildFBOWithWidthAndHeight(GLuint width, GLuint height);
     GLuint buildTexture(demoImage* image);
-    program* buildProgramFromFile(string);
+    
+    unique_ptr<program> buildProgramFromFile(string);
 
 
 };
@@ -96,11 +98,10 @@ renderer* renderer::initWithDefaultFBO(GLuint defaultFBOName)
         
         
         auto m = model::voxel();
-        self->m_characterVAOName = (new vao(m))->name;
-        self->m_characterNumElements = m.elements.size();
+        self->m_characterVAO = unique_ptr<vao>(new vao(m));
         
         auto n = model::quad();
-        self->m_quadVAOName = (new vao(n))->name;
+        self->m_quadVAO = unique_ptr<vao>(new vao(n));
         
 		
 		
@@ -129,7 +130,7 @@ renderer* renderer::initWithDefaultFBO(GLuint defaultFBOName)
 		// Build Program
 		self->m_characterPrgName = *self->buildProgramFromFile("deferred");
 		
-        self->m_deferredFBOName = self->buildFBOWithWidthAndHeight(1000, 1000);
+        self->m_deferredFBO = self->buildFBOWithWidthAndHeight(1000, 1000);
         
 		////////////////////////////////////////////////
 		// Set up OpenGL state that will never change //
@@ -169,10 +170,82 @@ void renderer_impl::resizeWithWidthAndHeight(GLuint width, GLuint height)
 	m_viewHeight = height;
 }
 
-GLuint smuggle_color;
-GLuint smuggle_normal;
-GLuint smuggle_depth;
-GLuint smuggle_position;
+
+
+class texture : public named
+{
+public:
+    texture() {
+        glGenTextures(1, &name_);
+    }
+    ~texture() {
+        glDeleteTextures(1, &name_);
+    }
+};
+
+class texture2d : public texture {
+public:
+    texture2d(GLsizei width, GLsizei height, GLenum format, GLenum type) {
+        bind();
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+        glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, type, NULL);
+    }
+    texture2d& bind() {
+        glBindTexture(GL_TEXTURE_2D, name_);
+        return *this;
+    }
+    texture2d& generateMipmap() {
+        glGenerateMipmap(GL_TEXTURE_2D);
+        return *this;
+    }
+};
+
+class framebuffer : public named {
+public:
+
+    vector<shared_ptr<texture2d>> color_attachment;
+    shared_ptr<texture2d> depth_attachment;
+    
+    framebuffer() {
+        glGenFramebuffers(1, &name_);
+        GLint maxColorAttachments;
+        glGetIntegerv(GL_MAX_COLOR_ATTACHMENTS, &maxColorAttachments);
+        color_attachment.resize(maxColorAttachments);
+    }
+    
+    ~framebuffer() {
+        glDeleteFramebuffers(1, &name_);
+    }
+    
+    framebuffer& bind() {
+        glBindFramebuffer(GL_FRAMEBUFFER, name_);
+        return *this;
+    }
+    
+    framebuffer& validate() {
+        GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+        if (status != GL_FRAMEBUFFER_COMPLETE) {
+            NSLog(@"Framebuffer is incomplete: %x", status);
+        }
+        return *this;
+    }
+    
+    framebuffer& attach_color(GLuint index, shared_ptr<texture2d> t) {
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + index, GL_TEXTURE_2D, *t, 0);
+        color_attachment[index] = t;
+        return *this;
+    }
+    framebuffer& attach_depth(shared_ptr<texture2d> t) {
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, *t, 0);
+        depth_attachment = t;
+        return *this;
+    }
+    
+};
+
 
 void renderer_impl::render() {
     
@@ -209,57 +282,44 @@ void renderer_impl::render() {
     glUniformMatrix4fv(glGetUniformLocation(m_characterPrgName, "projectionMatrix"), 1, GL_FALSE, projection.m);
 	glUniformMatrix4fv(glGetUniformLocation(m_characterPrgName, "inverseTransposeModelViewMatrix"), 1, GL_FALSE, inverseTransposeModelView.m);
 
-    glBindFramebuffer(GL_FRAMEBUFFER, m_deferredFBOName);
+    //glBindFramebuffer(GL_FRAMEBUFFER, m_deferredFBO);
+    m_deferredFBO->bind();
     glClearColor(0,0,1,0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glClearColor(0,1,0,0);
     glBindTexture(GL_TEXTURE_2D, m_characterTexName);
-    glBindVertexArray(m_characterVAOName);
+    glBindVertexArray(*m_characterVAO);
     GLenum bufs[] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2 };
     GetGLError();
     glDrawBuffers(3, bufs);
     GetGLError();
-    glDrawElements(GL_TRIANGLES, m_characterNumElements, GL_UNSIGNED_SHORT, 0);
+    //glDrawElements(GL_TRIANGLES, m_characterVAO->count_, GL_UNSIGNED_SHORT, 0);
+    m_characterVAO->draw();
     
     // Bind our default FBO to render to the screen
 	glBindFramebuffer(GL_FRAMEBUFFER, m_defaultFBOName);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    //glBindTexture(GL_TEXTURE_2D, m_characterTexName);
 
-    glBindTexture(GL_TEXTURE_2D, smuggle_color);
-    glGenerateMipmap(GL_TEXTURE_2D);
-	
+    // Draw quads textured with the other framebuffer's attachments
+    m_deferredFBO->color_attachment[0]->bind().generateMipmap();
     modelView = translate(vec3{{0.f, 1.f, -3.f}}) * rotateX(M_PI);
     glUniformMatrix4fv(glGetUniformLocation(m_characterPrgName, "modelViewMatrix"), 1, GL_FALSE, modelView.m);
-    glBindVertexArray(m_quadVAOName);
-    GetGLError();
-    //glDrawBuffers(1, bufs);
-    GetGLError();
-    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
+    m_quadVAO->bind().draw();
 
-    glBindTexture(GL_TEXTURE_2D, smuggle_normal);
-    glGenerateMipmap(GL_TEXTURE_2D);
-
+    m_deferredFBO->color_attachment[1]->bind().generateMipmap();
     modelView = translate(vec3{{-1.f, 1.f, -3.f}}) * rotateX(M_PI);
     glUniformMatrix4fv(glGetUniformLocation(m_characterPrgName, "modelViewMatrix"), 1, GL_FALSE, modelView.m);
-    glBindVertexArray(m_quadVAOName);
-    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
+    m_quadVAO->bind().draw();
     
-    glBindTexture(GL_TEXTURE_2D, smuggle_depth);
-    glGenerateMipmap(GL_TEXTURE_2D);
-
+    m_deferredFBO->color_attachment[2]->bind().generateMipmap();
     modelView = translate(vec3{{0.f, -0.f, -3.f}}) * rotateX(M_PI);
     glUniformMatrix4fv(glGetUniformLocation(m_characterPrgName, "modelViewMatrix"), 1, GL_FALSE, modelView.m);
-    glBindVertexArray(m_quadVAOName);
-    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
+    m_quadVAO->bind().draw();
     
-    glBindTexture(GL_TEXTURE_2D, smuggle_position);
-    glGenerateMipmap(GL_TEXTURE_2D);
-    
+    m_deferredFBO->depth_attachment->bind().generateMipmap();
     modelView = translate(vec3{{-1.f, -0.f, -3.f}}) * rotateX(M_PI);
     glUniformMatrix4fv(glGetUniformLocation(m_characterPrgName, "modelViewMatrix"), 1, GL_FALSE, modelView.m);
-    glBindVertexArray(m_quadVAOName);
-    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
+    m_quadVAO->bind().draw();
     
     
     GetGLError();
@@ -322,142 +382,21 @@ GLuint renderer_impl::buildTexture(demoImage* image)
 }
 
 
-void renderer_impl::deleteFBOAttachment(GLenum attachment)
-{    
-    GLint param;
-    GLuint objName;
-    glGetFramebufferAttachmentParameteriv(GL_FRAMEBUFFER, attachment,
-        GL_FRAMEBUFFER_ATTACHMENT_OBJECT_TYPE, &param);
-    glGetFramebufferAttachmentParameteriv(GL_FRAMEBUFFER, attachment,
-        GL_FRAMEBUFFER_ATTACHMENT_OBJECT_NAME, (GLint*) &objName);
-    if(GL_RENDERBUFFER == param)
-        glDeleteRenderbuffers(1, &objName);
-    else if(GL_TEXTURE == param)
-        glDeleteTextures(1, &objName);
-    
-}
-
-void renderer_impl::destroyFBO(GLuint fboName)
-{ 
-	glBindFramebuffer(GL_FRAMEBUFFER, fboName);
-	GLint maxColorAttachments;
-    glGetIntegerv(GL_MAX_COLOR_ATTACHMENTS, &maxColorAttachments);
-	GLint colorAttachment;
-	for(colorAttachment = 0; colorAttachment < maxColorAttachments; colorAttachment++)
-    	deleteFBOAttachment(GL_COLOR_ATTACHMENT0+colorAttachment);
-	deleteFBOAttachment(GL_DEPTH_ATTACHMENT);
-	deleteFBOAttachment(GL_STENCIL_ATTACHMENT);
-	glDeleteFramebuffers(1,&fboName);
-}
-
-
-
-GLuint renderer_impl::buildFBOWithWidthAndHeight(GLuint width, GLuint height)
+unique_ptr<framebuffer> renderer_impl::buildFBOWithWidthAndHeight(GLuint width, GLuint height)
 {
-	GLuint fboName;
-	
-	GLuint colorTexture, colorTexture2, colorTexture3;
-	
-	// Create a texture object to apply to model
-	glGenTextures(1, &colorTexture);
-	glBindTexture(GL_TEXTURE_2D, colorTexture);
-	smuggle_color = colorTexture;
-	
-	// Set up filter and wrap modes for this texture object
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-	
-	// Allocate a texture image with which we can render to
-	// Pass NULL for the data parameter since we don't need to load image data.
-	//     We will be generating the image by rendering to this texture
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
-				 width, height, 0,
-				 GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 
-	// Create a texture object to apply to model
-	glGenTextures(1, &colorTexture2);
-	glBindTexture(GL_TEXTURE_2D, colorTexture2);
+    auto c1 = unique_ptr<texture2d>(new texture2d(width, height, GL_RGBA, GL_UNSIGNED_BYTE));
+    auto c2 = unique_ptr<texture2d>(new texture2d(width, height, GL_RGBA, GL_UNSIGNED_BYTE));
+    auto c3 = unique_ptr<texture2d>(new texture2d(width, height, GL_RGBA, GL_UNSIGNED_BYTE));
+    auto d1 = unique_ptr<texture2d>(new texture2d(width, height, GL_DEPTH_COMPONENT, GL_UNSIGNED_SHORT));
+	   
+    auto fboName = unique_ptr<framebuffer>(new framebuffer());
+    fboName->bind()
+        .attach_color(0, std::move(c1))
+        .attach_color(1, std::move(c2))
+        .attach_color(2, std::move(c3))
+        .attach_depth(std::move(d1));
     
-    smuggle_normal = colorTexture2;
-	
-	// Set up filter and wrap modes for this texture object
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-	
-	
-    // Allocate a texture image with which we can render to
-	// Pass NULL for the data parameter since we don't need to load image data.
-	//     We will be generating the image by rendering to this texture
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
-				 width, height, 0,
-				 GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-	
-    // Create a texture object to apply to model
-	glGenTextures(1, &colorTexture3);
-	glBindTexture(GL_TEXTURE_2D, colorTexture3);
-	smuggle_position = colorTexture3;
-	
-	// Set up filter and wrap modes for this texture object
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-	
-	// Allocate a texture image with which we can render to
-	// Pass NULL for the data parameter since we don't need to load image data.
-	//     We will be generating the image by rendering to this texture
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
-				 width, height, 0,
-				 GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-
-    
-    
-    
-    /*
-	GLuint depthRenderbuffer;
-	glGenRenderbuffers(1, &depthRenderbuffer);
-	glBindRenderbuffer(GL_RENDERBUFFER, depthRenderbuffer);
-	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT16, width, height);
-     */
-    
-    // Create a texture object to apply to model
-    GLuint depthTexture;
-	glGenTextures(1, &depthTexture);
-	glBindTexture(GL_TEXTURE_2D, depthTexture);
-    
-    smuggle_depth = depthTexture;
-	
-	// Set up filter and wrap modes for this texture object
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-	
-	// Allocate a texture image with which we can render to
-	// Pass NULL for the data parameter since we don't need to load image data.
-	//     We will be generating the image by rendering to this texture
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT,
-				 width, height, 0,
-				 GL_DEPTH_COMPONENT, GL_UNSIGNED_SHORT, NULL);
-	
-	glGenFramebuffers(1, &fboName);
-	glBindFramebuffer(GL_FRAMEBUFFER, fboName);	
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, colorTexture, 0);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, colorTexture2, 0);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, colorTexture3, 0);
-	//glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthRenderbuffer);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthTexture, 0);
-	
-	if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-	{
-		NSLog(@"failed to make complete framebuffer object %x", glCheckFramebufferStatus(GL_FRAMEBUFFER));
-		destroyFBO(fboName);
-		return 0;
-	}
 	
 	GetGLError();
 	
@@ -466,7 +405,7 @@ GLuint renderer_impl::buildFBOWithWidthAndHeight(GLuint width, GLuint height)
 
 
 
-program* renderer_impl::buildProgramFromFile(string s) {
+unique_ptr<program> renderer_impl::buildProgramFromFile(string s) {
     NSString* filePathName = [[NSBundle mainBundle]
                               pathForResource:[NSString
                                                stringWithUTF8String:s.c_str()]
@@ -495,21 +434,18 @@ program* renderer_impl::buildProgramFromFile(string s) {
     shader vs{GL_VERTEX_SHADER, vector<string>{ss.str(), vertexSource}};
     shader fs{GL_FRAGMENT_SHADER, vector<string>{ss.str(), fragmentSource}};
     
-    program& prgName = *(new program); // explicitly leak it for now
+    unique_ptr<program> prgName{new program};
     
-    prgName.attach(vs).attach(fs);
+    prgName->attach(vs).attach(fs);
     
-    prgName.bindAttrib(POS_ATTRIB_IDX, "inPosition");
-    prgName.bindAttrib(NORMAL_ATTRIB_IDX, "inNormal");
-    prgName.bindAttrib(TEXCOORD_ATTRIB_IDX, "inTexcoord");
+    prgName->bindAttrib(POS_ATTRIB_IDX, "inPosition")
+        .bindAttrib(NORMAL_ATTRIB_IDX, "inNormal")
+        .bindAttrib(TEXCOORD_ATTRIB_IDX, "inTexcoord")
+        .bindFrag(0, "outColor")
+        .bindFrag(1, "outPosition")
+        .bindFrag(2, "outNormal");
     
-    prgName.bindFrag(0, "outColor");
-    prgName.bindFrag(1, "outPosition");
-    prgName.bindFrag(2, "outNormal");
-    
-    glDisable(GL_BLEND);
-    
-    prgName.link().validate().use();
+    prgName->link().validate().use();
 	
     
 	///////////////////////////////////////
@@ -517,7 +453,7 @@ program* renderer_impl::buildProgramFromFile(string s) {
 	///////////////////////////////////////
 
 	
-	GLint samplerLoc = glGetUniformLocation(prgName, "diffuseTexture");
+	GLint samplerLoc = glGetUniformLocation(*prgName, "diffuseTexture");
 	
 	// Indicate that the diffuse texture will be bound to texture unit 0
 	GLint unit = 0;
@@ -525,7 +461,7 @@ program* renderer_impl::buildProgramFromFile(string s) {
 	
 	GetGLError();
 	
-	return &prgName;
+	return prgName;
 	
 }
 

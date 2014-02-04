@@ -11,11 +11,11 @@
 
 #include <OpenGL/OpenGL.h>
 #include <string>
+
+#include "named.h"
 #include "shader.h"
 
-class program {
-    
-    GLuint name;
+class program : public named {
     
     program(const program&);
     
@@ -24,10 +24,7 @@ class program {
 public:
     
     program();
-    
-    ~program();
-    
-    operator GLuint() const;
+    virtual ~program();
     
     program& bindAttrib(GLuint index, std::string name);
     program& bindFrag(GLuint index, std::string name);

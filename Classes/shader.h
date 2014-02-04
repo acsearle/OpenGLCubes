@@ -12,14 +12,12 @@
 #include <OpenGL/OpenGL.h>
 #include <string>
 #include <vector>
+#include "named.h"
 
-class shader {
-    GLuint name;
-    shader(const shader&);
+class shader : public named {
 public:
     shader(GLenum type, std::vector<std::string> sources);
     ~shader();
-    operator GLint();
 };
 
 

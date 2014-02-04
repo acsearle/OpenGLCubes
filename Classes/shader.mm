@@ -11,30 +11,28 @@
 
 using namespace std;
 
-shader::shader(GLenum type, vector<string> sources) {
-    name = glCreateShader(type);
+shader::shader(GLenum type, vector<string> sources) : named(glCreateShader(type)) {
     vector<GLchar*> str;
     vector<GLint> len;
     for (auto& s : sources) {
         str.push_back((GLchar*) s.data());
         len.push_back(s.size());
     }
-    glShaderSource(name, sources.size(), str.data(), len.data());
-    glCompileShader(name);
+    glShaderSource(name_, sources.size(), str.data(), len.data());
+    glCompileShader(name_);
     
     GLsizei n;
-    glGetShaderiv(name, GL_INFO_LOG_LENGTH, &n);
+    glGetShaderiv(name_, GL_INFO_LOG_LENGTH, &n);
     if (n > 0)
     {
-        //GLchar *log = (GLchar*) malloc(logLength);
         string s;
         s.resize(n);
-        glGetShaderInfoLog(name, n, &n, (GLchar*) s.data());
+        glGetShaderInfoLog(name_, n, &n, (GLchar*) s.data());
         NSLog(@"Shader compile log:%s\n", s.c_str());
     }
     
     GLint status;
-    glGetShaderiv(name, GL_COMPILE_STATUS, &status);
+    glGetShaderiv(name_, GL_COMPILE_STATUS, &status);
     if (!status)
     {
         NSLog(@"Failed to compile shader:\n");
@@ -46,11 +44,8 @@ shader::shader(GLenum type, vector<string> sources) {
 }
 
 shader::~shader() {
-    glDeleteShader(name);
+    glDeleteShader(name_);
 }
 
-shader::operator GLint() {
-    return name;
-}
 
 
