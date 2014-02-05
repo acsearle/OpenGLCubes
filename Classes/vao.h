@@ -30,7 +30,7 @@ public:
 
 class vao : public named {
 public:
-    explicit vao(mesh& m);
+    explicit vao(const mesh& m);
     vao& bind();
     ~vao();
     vao& draw();

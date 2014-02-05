@@ -26,15 +26,52 @@
 #include "texture.h"
 #include "vao.h"
 
+
 using namespace std;
 
 
-// Indicies to which we will set vertex array attibutes
-// See buildVAO and buildProgram
+class entity {
+public:
+    mat4 model;
+    entity() : model(identity4) {}
+    explicit entity(mat4 model) : model(model) {}
+    virtual void draw(program& p, mat4 view) = 0;
+};
+
+class leaf : public entity {
+public:
+    shared_ptr<vao> vao_;
+    shared_ptr<texture2d> tex_;
+    virtual void draw(program& p, mat4 view)
+    {
+        p["modelViewMatrix"] = view * model;
+        p["inverseTransposeModelViewMatrix"] = invertAndTranspose(view * model);
+        tex_->bind();
+        vao_->bind().draw();
+    }
+};
+
+class spotlight : public entity {
+};
+
+class group : public entity {
+public:
+    virtual void draw(program& p, mat4 view)
+    {
+        for (auto q : entities)
+            q->draw(p, view * model);
+    }
+    vector<shared_ptr<entity>> entities;
+};
+
+class camera : public entity {
+public:
+    void draw(program& p, mat4 view) {
+        p["projectionMatrix"] = model * view;
+    }
+};
 
 
-
-//@implementation OpenGLRenderer
 
 
 class renderer_impl : public renderer
@@ -43,14 +80,24 @@ public:
     GLuint m_defaultFBOName;
     
     shared_ptr<program> m_characterPrg;
-    unique_ptr<vao> m_characterVAO;
-    shared_ptr<texture2d> m_characterTex;
+    //unique_ptr<vao> m_characterVAO;
+    //shared_ptr<texture2d> m_characterTex;
+    
+    shared_ptr<entity> m_camera;
+    shared_ptr<entity> m_character;
+    shared_ptr<entity> m_display;
+    
+    vector<shared_ptr<leaf>> m_displays;
+    
     GLfloat m_characterAngle;
     unique_ptr<framebuffer> m_deferredFBO;
-    unique_ptr<vao> m_quadVAO;
+    //unique_ptr<vao> m_quadVAO;
     
     GLuint m_viewWidth;
     GLuint m_viewHeight;
+    bool m_resized; // We have to wait to implement resize on the rendering thread
+    
+    explicit renderer_impl(GLuint defaultFBOName);
     
     virtual void resizeWithWidthAndHeight(GLuint width, GLuint height);
     virtual void render();
@@ -62,7 +109,7 @@ public:
     
     unique_ptr<program> buildProgramFromFile(string);
 
-
+    
 };
 
 
@@ -75,35 +122,40 @@ public:
 
 
 
-renderer* renderer::initWithDefaultFBO(GLuint defaultFBOName)
+unique_ptr<renderer> renderer::initWithDefaultFBO(GLuint defaultFBOName)
 {
-	//if((self = [super init]))
-    renderer_impl* self = new renderer_impl;
+    return unique_ptr<renderer>(new renderer_impl(defaultFBOName));
+}
+
+    renderer_impl::renderer_impl(GLuint defaultFBOName)
 	{
 		NSLog(@"%s %s", glGetString(GL_RENDERER), glGetString(GL_VERSION));
 		
+    
+        
 		////////////////////////////////////////////////////
 		// Build all of our and setup initial state here  //
 		// Don't wait until our real time run loop begins //
 		////////////////////////////////////////////////////
 		
-		self->m_defaultFBOName = defaultFBOName;
+		m_defaultFBOName = defaultFBOName;
 		
-		self->m_viewWidth = 100;
-		self->m_viewHeight = 100;
+		m_viewWidth = 100;
+		m_viewHeight = 100;
 		
-		self->m_characterAngle = 0;
-		
+		m_characterAngle = 0;
+        
 		NSString* filePathName = nil;
         
+        auto x = make_shared<leaf>();
+        m_character = x;
         
         auto m = mesh::voxel();
-        self->m_characterVAO = unique_ptr<vao>(new vao(m));
+        //self->m_characterVAO = unique_ptr<vao>(new vao(m));
+        x->vao_ = make_shared<vao>(m);
         
-        auto n = mesh::quad();
-        self->m_quadVAO = unique_ptr<vao>(new vao(n));
         
-		
+		m_camera = make_shared<camera>();
 		
 		////////////////////////////////////
 		// Load texture for our character //
@@ -113,10 +165,15 @@ renderer* renderer::initWithDefaultFBO(GLuint defaultFBOName)
 		demoImage *image = imgLoadImage([filePathName cStringUsingEncoding:NSASCIIStringEncoding], false);
 		
 		// Build a texture object with our image data
-		self->m_characterTex = self->buildTexture(image);
+		//self->m_characterTex = self->buildTexture(image);
+        shared_ptr<texture2d> demonTexture = buildTexture(image);
+        x->tex_ = demonTexture;
 		
 		// We can destroy the image once it's loaded into GL
 		imgDestroyImage(image);
+        
+        
+        
         
 		
 		////////////////////////////////////////////////////
@@ -128,9 +185,23 @@ renderer* renderer::initWithDefaultFBO(GLuint defaultFBOName)
         string vtxSource, frgSource;
 		
 		// Build Program
-		self->m_characterPrg = self->buildProgramFromFile("deferred");
+		m_characterPrg = buildProgramFromFile("deferred");
 		
-        self->m_deferredFBO = self->buildFBOWithWidthAndHeight(100, 100);
+        m_deferredFBO = buildFBOWithWidthAndHeight(100, 100);
+
+        auto a = make_shared<group>();
+        auto c = make_shared<vao>(mesh::quad());
+        for (int x = 0; x != 2; ++x)
+            for (int y = 0; y != 2; ++y) {
+                auto d = make_shared<leaf>();
+                d->vao_ = c;
+                d->model = translate(vec3({{(float) x, (float) y, 0.f}}));
+                m_displays.push_back(d);
+                a->entities.push_back(d);
+            }
+        m_display = a;
+        
+        
         
 		////////////////////////////////////////////////
 		// Set up OpenGL state that will never change //
@@ -146,113 +217,81 @@ renderer* renderer::initWithDefaultFBO(GLuint defaultFBOName)
 		//   This is done in order to pre-warm OpenGL
 		// We don't need to present the buffer since we don't actually want the
 		//   user to see this, we're only drawing as a pre-warm stage
-		self->render();
+		//self->render();
 		
 		// Reset the m_characterAngle which is incremented in render
-		self->m_characterAngle = 0;
+		m_characterAngle = 0;
 		
 		// Check for errors to make sure all of our setup went ok
 		GetGLError();
+        
+ 
 	}
-	
-	return self;
-}
 
 
 
 
 
-void renderer_impl::resizeWithWidthAndHeight(GLuint width, GLuint height)
-{
+void renderer_impl::resizeWithWidthAndHeight(GLuint width, GLuint height) {
 	glViewport(0, 0, width, height);
 
 	m_viewWidth = width;
 	m_viewHeight = height;
     
-    // rebuild the backing render target
-    m_deferredFBO = buildFBOWithWidthAndHeight(width, height);
-    
+    //m_deferredFBO = buildFBOWithWidthAndHeight(m_viewWidth, m_viewHeight);
+    m_deferredFBO->resize(width, height);
+    m_camera->model = GLKMatrix4MakePerspective(45, (float)m_viewWidth / (float)m_viewHeight,1.0,100);
 }
 
 
 
 void renderer_impl::render() {
+    mat4 view;
     
-    mat4 modelView;
-    mat4 projection;
-    mat4 mvp;
+       
 	
 	// Use the program for rendering our character
 	m_characterPrg->use();
-	
-	// Calculate the projection matrix
-	//mtxLoadPerspective(projection, 90, (float)m_viewWidth / (float)m_viewHeight,5.0,10000);
-    projection = GLKMatrix4MakePerspective(45, (float)m_viewWidth / (float)m_viewHeight,1.0,100);
-	
-	// Calculate the modelview matrix to render our character 
-	//  at the proper position and rotation
-	//mtxLoadTranslate(modelView, 0, 0, -45);
-	modelView = translate(vec3{{0.f, 0.f, -20.f}});
-    //mtxRotateXApply(modelView, -90.0f);
-    modelView *= rotate(M_PI_2, vec3{{1.f, 0.f, 0.f}});
-    //mtxRotateApply(modelView, m_characterAngle, 0.7, 0.3, 1);
-    modelView *= rotate(m_characterAngle/57, vec3{{0.7f, 0.3f, 0.1f}});
-	
-	// Multiply the modelview and projection matrix and set it in the shader
-	//mtxMultiply(mvp, projection, modelView);
-    mvp = projection * modelView;
-    mat4 inverseTransposeModelView = invertAndTranspose(modelView);
-	
-	// Have our shader use the modelview projection matrix
-	// that we calculated above
+		
+    
+    view = translate(vec3{{0.f, 0.f, -20.f}}) * rotate(M_PI_2, vec3{{1.f, 0.f, 0.f}});
+    m_camera->draw(*m_characterPrg, identity4);
 
-	
-    glUniformMatrix4fv(glGetUniformLocation(*m_characterPrg, "modelViewMatrix"), 1, GL_FALSE, modelView.m);
-    glUniformMatrix4fv(glGetUniformLocation(*m_characterPrg, "projectionMatrix"), 1, GL_FALSE, projection.m);
-	glUniformMatrix4fv(glGetUniformLocation(*m_characterPrg, "inverseTransposeModelViewMatrix"), 1, GL_FALSE, inverseTransposeModelView.m);
-
-    //glBindFramebuffer(GL_FRAMEBUFFER, m_deferredFBO);
+    
+    
+    m_character->model = rotate(m_characterAngle/57, vec3{{0.7f, 0.3f, 0.1f}});
+    
     m_deferredFBO->bind();
-    glClearColor(0,0,1,0);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glClearColor(0,1,0,0);
-    glBindTexture(GL_TEXTURE_2D, *m_characterTex);
-    glBindVertexArray(*m_characterVAO);
+
     GLenum bufs[] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2 };
     glDrawBuffers(3, bufs);
-    m_characterVAO->draw();
+
+    glClearColor(0,0,1,0);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+
+    m_character->draw(*m_characterPrg, view);
     
     // Bind our default FBO to render to the screen
 	glBindFramebuffer(GL_FRAMEBUFFER, m_defaultFBOName);
+    glClearColor(0,1,0,0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    // Draw quads textured with the other framebuffer's attachments
-    m_deferredFBO->color_attachment[0]->bind();
-    //modelView = translate(vec3{{0.f, 1.f, -3.f}}) * rotateX(M_PI);
-    //glUniformMatrix4fv(glGetUniformLocation(*m_characterPrg, "modelViewMatrix"), 1, GL_FALSE, modelView.m);
-    (*m_characterPrg)["modelViewMatrix"] = translate(vec3{{0.f, 1.f, -3.f}}) * rotateX(M_PI);
-    m_quadVAO->bind().draw();
-
-    m_deferredFBO->color_attachment[1]->bind();
-    modelView = translate(vec3{{-1.f, 1.f, -3.f}}) * rotateX(M_PI);
-    glUniformMatrix4fv(glGetUniformLocation(*m_characterPrg, "modelViewMatrix"), 1, GL_FALSE, modelView.m);
-    m_quadVAO->bind().draw();
+    //m_display->draw(*m_characterPrg, translate(vec3{{0.f,0.f,-3.f}}) * rotateX(M_PI));
+    //m_character->draw(*m_characterPrg, view);
     
-    m_deferredFBO->color_attachment[2]->bind();
-    modelView = translate(vec3{{0.f, -0.f, -3.f}}) * rotateX(M_PI);
-    glUniformMatrix4fv(glGetUniformLocation(*m_characterPrg, "modelViewMatrix"), 1, GL_FALSE, modelView.m);
-    m_quadVAO->bind().draw();
+    m_displays[0]->tex_ = m_deferredFBO->color_attachment[0];
+    m_displays[1]->tex_ = m_deferredFBO->color_attachment[1];
+    m_displays[2]->tex_ = m_deferredFBO->color_attachment[2];
+    m_displays[3]->tex_ = m_deferredFBO->depth_attachment;
     
-    m_deferredFBO->depth_attachment->bind();
-    modelView = translate(vec3{{-1.f, -0.f, -3.f}}) * rotateX(M_PI);
-    glUniformMatrix4fv(glGetUniformLocation(*m_characterPrg, "modelViewMatrix"), 1, GL_FALSE, modelView.m);
-    m_quadVAO->bind().draw();
-    
+    m_display->draw(*m_characterPrg, translate(vec3{{1.f,-1.f,-3.f}}) * rotateY(M_PI));
     
     GetGLError();
 	
 	// Update the angle so our character keeps spinning
 	m_characterAngle++;
+    
 }
 
 static GLsizei GetGLTypeSize(GLenum type)

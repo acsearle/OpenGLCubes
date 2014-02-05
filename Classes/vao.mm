@@ -11,7 +11,7 @@
 
 using namespace std;
 
-vao::vao(mesh& m) : count_(m.elements.size()) {
+vao::vao(const mesh& m) : count_(m.elements.size()) {
     glGenVertexArrays(1, &name_);
     bind();
 

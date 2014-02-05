@@ -56,6 +56,15 @@ public:
         return *this;
     }
     
+    framebuffer& resize(GLsizei width, GLsizei height) {
+        for (auto p : color_attachment)
+            if (p)
+                p->bind().resize(width, height);
+        if (depth_attachment)
+            depth_attachment->bind().resize(width, height);
+        return *this;
+    }
+    
 };
 
 

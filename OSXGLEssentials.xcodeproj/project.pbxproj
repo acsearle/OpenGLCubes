@@ -9,9 +9,7 @@
 /* Begin PBXBuildFile section */
 		3A0BF472177B8C1F00A6C4D7 /* GLEssentialsWindowController.mm in Sources */ = {isa = PBXBuildFile; fileRef = 3A0BF471177B8C1F00A6C4D7 /* GLEssentialsWindowController.mm */; };
 		3A0BF47A177BC80300A6C4D7 /* GLEssentialsFullscreenWindow.mm in Sources */ = {isa = PBXBuildFile; fileRef = 3A0BF479177BC80300A6C4D7 /* GLEssentialsFullscreenWindow.mm */; };
-		3A1598CE11B9DDB0001E7AB5 /* vec.mm in Sources */ = {isa = PBXBuildFile; fileRef = 3A1598C411B9DDB0001E7AB5 /* vec.mm */; };
 		3A1598D011B9DDB0001E7AB5 /* modelUtil.mm in Sources */ = {isa = PBXBuildFile; fileRef = 3A1598C811B9DDB0001E7AB5 /* modelUtil.mm */; };
-		3A1598D111B9DDB0001E7AB5 /* mat.mm in Sources */ = {isa = PBXBuildFile; fileRef = 3A1598CA11B9DDB0001E7AB5 /* mat.mm */; };
 		3A1598D211B9DDB0001E7AB5 /* imageUtil.mm in Sources */ = {isa = PBXBuildFile; fileRef = 3A1598CB11B9DDB0001E7AB5 /* imageUtil.mm */; };
 		3A1598DB11B9DDC5001E7AB5 /* renderer.mm in Sources */ = {isa = PBXBuildFile; fileRef = 3A1598D511B9DDC5001E7AB5 /* renderer.mm */; };
 		3A1598E411B9DDF3001E7AB5 /* character.vsh in Resources */ = {isa = PBXBuildFile; fileRef = 3A1598E011B9DDF3001E7AB5 /* character.vsh */; };
@@ -49,12 +47,10 @@
 		3A0BF478177BC80300A6C4D7 /* GLEssentialsFullscreenWindow.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GLEssentialsFullscreenWindow.h; path = Classes/OSX/GLEssentialsFullscreenWindow.h; sourceTree = "<group>"; };
 		3A0BF479177BC80300A6C4D7 /* GLEssentialsFullscreenWindow.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = GLEssentialsFullscreenWindow.mm; path = Classes/OSX/GLEssentialsFullscreenWindow.mm; sourceTree = "<group>"; };
 		3A1598C311B9DDB0001E7AB5 /* vec.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = vec.h; path = UtilSrc/vec.h; sourceTree = "<group>"; };
-		3A1598C411B9DDB0001E7AB5 /* vec.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = vec.mm; path = UtilSrc/vec.mm; sourceTree = "<group>"; };
 		3A1598C511B9DDB0001E7AB5 /* source.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = source.h; path = UtilSrc/source.h; sourceTree = "<group>"; };
 		3A1598C711B9DDB0001E7AB5 /* modelUtil.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = modelUtil.h; path = UtilSrc/modelUtil.h; sourceTree = "<group>"; };
 		3A1598C811B9DDB0001E7AB5 /* modelUtil.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = modelUtil.mm; path = UtilSrc/modelUtil.mm; sourceTree = "<group>"; };
 		3A1598C911B9DDB0001E7AB5 /* mat.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = mat.h; path = UtilSrc/mat.h; sourceTree = "<group>"; };
-		3A1598CA11B9DDB0001E7AB5 /* mat.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = mat.mm; path = UtilSrc/mat.mm; sourceTree = "<group>"; };
 		3A1598CB11B9DDB0001E7AB5 /* imageUtil.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = imageUtil.mm; path = UtilSrc/imageUtil.mm; sourceTree = "<group>"; };
 		3A1598CC11B9DDB0001E7AB5 /* imageUtil.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = imageUtil.h; path = UtilSrc/imageUtil.h; sourceTree = "<group>"; };
 		3A1598CD11B9DDB0001E7AB5 /* glUtil.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = glUtil.h; path = UtilSrc/glUtil.h; sourceTree = "<group>"; };
@@ -184,13 +180,11 @@
 				3A1598CB11B9DDB0001E7AB5 /* imageUtil.mm */,
 				3A1598CC11B9DDB0001E7AB5 /* imageUtil.h */,
 				29B97316FDCFA39411CA2CEA /* main.mm */,
-				3A1598CA11B9DDB0001E7AB5 /* mat.mm */,
 				3A1598C911B9DDB0001E7AB5 /* mat.h */,
 				3A1598C811B9DDB0001E7AB5 /* modelUtil.mm */,
 				3A1598C711B9DDB0001E7AB5 /* modelUtil.h */,
 				3A349C9112CAEA1100B73A51 /* source.mm */,
 				3A1598C511B9DDB0001E7AB5 /* source.h */,
-				3A1598C411B9DDB0001E7AB5 /* vec.mm */,
 				3A1598C311B9DDB0001E7AB5 /* vec.h */,
 			);
 			name = "Other Sources";
@@ -305,14 +299,12 @@
 			files = (
 				8D11072D0486CEB800E47090 /* main.mm in Sources */,
 				3A0BF47A177BC80300A6C4D7 /* GLEssentialsFullscreenWindow.mm in Sources */,
-				3A1598CE11B9DDB0001E7AB5 /* vec.mm in Sources */,
 				CA6C43A918A073100044121D /* framebuffer.mm in Sources */,
 				CAF4BB54189F5CD100C73117 /* shader.mm in Sources */,
 				CAF4BB55189F5CD100C73117 /* vao.mm in Sources */,
 				3A1598D011B9DDB0001E7AB5 /* modelUtil.mm in Sources */,
 				3A0BF472177B8C1F00A6C4D7 /* GLEssentialsWindowController.mm in Sources */,
 				CA6C43A618A072220044121D /* texture.mm in Sources */,
-				3A1598D111B9DDB0001E7AB5 /* mat.mm in Sources */,
 				CAF4BB52189F5CD100C73117 /* mesh.mm in Sources */,
 				3A1598D211B9DDB0001E7AB5 /* imageUtil.mm in Sources */,
 				3A1598DB11B9DDC5001E7AB5 /* renderer.mm in Sources */,

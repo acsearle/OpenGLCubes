@@ -1,13 +1,5 @@
-/*
-     File: matrixUtil.h
- Abstract: 
- Functions for performing matrix math.
- 
-  Version: 1.7
-  */
-
-#ifndef __MATRIX_UTIL_H__
-#define __MATRIX_UTIL_H__
+#ifndef __MAT_H__
+#define __MATRL_H__
 
 // Matrix is a column major floating point array
 
@@ -106,5 +98,5 @@ const mat4 identity4 = {
     0.f, 0.f, 0.f, 1.f
 };
 
-#endif //__MATRIX_UTIL_H__
+#endif //__MAT_H__
 

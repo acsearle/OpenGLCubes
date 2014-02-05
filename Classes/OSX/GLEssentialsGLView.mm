@@ -126,7 +126,7 @@ static CVReturn MyDisplayLinkCallback(CVDisplayLinkRef displayLink,
 	// Init our renderer.  Use 0 for the defaultFBO which is appropriate for
 	// OSX (but not iOS since iOS apps must create their own FBO)
 	//m_renderer = [[OpenGLRenderer alloc] initWithDefaultFBO:0];
-    m_renderer = renderer::initWithDefaultFBO(0);
+    m_renderer = renderer::initWithDefaultFBO(0).release();
 }
 
 - (void) reshape
