@@ -126,7 +126,7 @@ static CVReturn MyDisplayLinkCallback(CVDisplayLinkRef displayLink,
 	// Init our renderer.  Use 0 for the defaultFBO which is appropriate for
 	// OSX (but not iOS since iOS apps must create their own FBO)
 	//m_renderer = [[OpenGLRenderer alloc] initWithDefaultFBO:0];
-    m_renderer = renderer::initWithDefaultFBO(0).release();
+    m_renderer = renderer::factory().release();
 }
 
 - (void) reshape
@@ -159,7 +159,7 @@ static CVReturn MyDisplayLinkCallback(CVDisplayLinkRef displayLink,
 	// Set the new dimensions in our renderer
 	//[m_renderer resizeWithWidth:viewRectPixels.size.width
     //                  AndHeight:viewRectPixels.size.height];
-    m_renderer->resizeWithWidthAndHeight(viewRectPixels.size.width, viewRectPixels.size.height);
+    m_renderer->resize(viewRectPixels.size.width, viewRectPixels.size.height);
 	
 	CGLUnlockContext((__bridge CGLContextObj)[[self openGLContext] CGLContextObj]);
 }

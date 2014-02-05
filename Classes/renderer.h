@@ -15,10 +15,11 @@ enum {
 
 class renderer {
 public:
-    virtual ~renderer() {}
-    static std::unique_ptr<renderer> initWithDefaultFBO(GLuint defaultFBOName);
-    virtual void resizeWithWidthAndHeight(GLuint width, GLuint height) = 0;
+    static std::unique_ptr<renderer> factory();
+    virtual ~renderer() = 0;
+    virtual void resize(GLuint width, GLuint height) = 0;
     virtual void render() = 0;
 
 };
+
 

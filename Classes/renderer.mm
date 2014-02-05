@@ -64,10 +64,13 @@ public:
     vector<shared_ptr<entity>> entities;
 };
 
-class camera : public entity {
+class camera {
 public:
-    void draw(program& p, mat4 view) {
-        p["projectionMatrix"] = model * view;
+    mat4 projection_;
+    camera() : projection_(identity4) {}
+    
+    void draw(program& p) {
+        p["projectionMatrix"] = projection_;
     }
 };
 
@@ -83,7 +86,7 @@ public:
     //unique_ptr<vao> m_characterVAO;
     //shared_ptr<texture2d> m_characterTex;
     
-    shared_ptr<entity> m_camera;
+    shared_ptr<camera> m_camera;
     shared_ptr<entity> m_character;
     shared_ptr<entity> m_display;
     
@@ -97,14 +100,12 @@ public:
     GLuint m_viewHeight;
     bool m_resized; // We have to wait to implement resize on the rendering thread
     
-    explicit renderer_impl(GLuint defaultFBOName);
+    explicit renderer_impl();
     
-    virtual void resizeWithWidthAndHeight(GLuint width, GLuint height);
+    virtual void resize(GLuint width, GLuint height);
     virtual void render();
 
-    void destroyFBO(GLuint fboName);
-    void deleteFBOAttachment(GLenum attachment);
-    unique_ptr<framebuffer> buildFBOWithWidthAndHeight(GLuint width, GLuint height);
+    unique_ptr<framebuffer> buildFBO(GLuint width, GLuint height);
     unique_ptr<texture2d> buildTexture(demoImage* image);
     
     unique_ptr<program> buildProgramFromFile(string);
@@ -118,16 +119,16 @@ public:
 
 
 
-
-
-
-
-unique_ptr<renderer> renderer::initWithDefaultFBO(GLuint defaultFBOName)
-{
-    return unique_ptr<renderer>(new renderer_impl(defaultFBOName));
+renderer::~renderer() {
 }
 
-    renderer_impl::renderer_impl(GLuint defaultFBOName)
+
+unique_ptr<renderer> renderer::factory()
+{
+    return unique_ptr<renderer>{new renderer_impl{}};
+}
+
+    renderer_impl::renderer_impl()
 	{
 		NSLog(@"%s %s", glGetString(GL_RENDERER), glGetString(GL_VERSION));
 		
@@ -137,9 +138,7 @@ unique_ptr<renderer> renderer::initWithDefaultFBO(GLuint defaultFBOName)
 		// Build all of our and setup initial state here  //
 		// Don't wait until our real time run loop begins //
 		////////////////////////////////////////////////////
-		
-		m_defaultFBOName = defaultFBOName;
-		
+				
 		m_viewWidth = 100;
 		m_viewHeight = 100;
 		
@@ -187,7 +186,7 @@ unique_ptr<renderer> renderer::initWithDefaultFBO(GLuint defaultFBOName)
 		// Build Program
 		m_characterPrg = buildProgramFromFile("deferred");
 		
-        m_deferredFBO = buildFBOWithWidthAndHeight(100, 100);
+        m_deferredFBO = buildFBO(100, 100);
 
         auto a = make_shared<group>();
         auto c = make_shared<vao>(mesh::quad());
@@ -232,7 +231,7 @@ unique_ptr<renderer> renderer::initWithDefaultFBO(GLuint defaultFBOName)
 
 
 
-void renderer_impl::resizeWithWidthAndHeight(GLuint width, GLuint height) {
+void renderer_impl::resize(GLuint width, GLuint height) {
 	glViewport(0, 0, width, height);
 
 	m_viewWidth = width;
@@ -240,7 +239,7 @@ void renderer_impl::resizeWithWidthAndHeight(GLuint width, GLuint height) {
     
     //m_deferredFBO = buildFBOWithWidthAndHeight(m_viewWidth, m_viewHeight);
     m_deferredFBO->resize(width, height);
-    m_camera->model = GLKMatrix4MakePerspective(45, (float)m_viewWidth / (float)m_viewHeight,1.0,100);
+    m_camera->projection_ = GLKMatrix4MakePerspective(45, (float)m_viewWidth / (float)m_viewHeight,1.0,100);
 }
 
 
@@ -255,7 +254,7 @@ void renderer_impl::render() {
 		
     
     view = translate(vec3{{0.f, 0.f, -20.f}}) * rotate(M_PI_2, vec3{{1.f, 0.f, 0.f}});
-    m_camera->draw(*m_characterPrg, identity4);
+    m_camera->draw(*m_characterPrg);
 
     
     
@@ -350,7 +349,7 @@ unique_ptr<texture2d> renderer_impl::buildTexture(demoImage* image)
 }
 
 
-unique_ptr<framebuffer> renderer_impl::buildFBOWithWidthAndHeight(GLuint width, GLuint height)
+unique_ptr<framebuffer> renderer_impl::buildFBO(GLuint width, GLuint height)
 {
 
     auto c1 = unique_ptr<texture2d>(new texture2d(width, height, GL_RGBA, GL_UNSIGNED_BYTE));
