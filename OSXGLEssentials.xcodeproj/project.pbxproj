@@ -16,8 +16,6 @@
 		3A1598E511B9DDF3001E7AB5 /* character.fsh in Resources */ = {isa = PBXBuildFile; fileRef = 3A1598E111B9DDF3001E7AB5 /* character.fsh */; };
 		3A1598EA11B9DE0A001E7AB5 /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = 3A1598E611B9DE0A001E7AB5 /* MainMenu.xib */; };
 		3A1598EB11B9DE0A001E7AB5 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 3A1598E711B9DE0A001E7AB5 /* InfoPlist.strings */; };
-		3A1598EC11B9DE0A001E7AB5 /* demon.png in Resources */ = {isa = PBXBuildFile; fileRef = 3A1598E811B9DE0A001E7AB5 /* demon.png */; };
-		3A1598ED11B9DE0A001E7AB5 /* demon.model in Resources */ = {isa = PBXBuildFile; fileRef = 3A1598E911B9DE0A001E7AB5 /* demon.model */; };
 		3A1598EF11B9DE37001E7AB5 /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3A1598EE11B9DE37001E7AB5 /* OpenGL.framework */; };
 		3A15990711B9DE6C001E7AB5 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3A15990611B9DE6C001E7AB5 /* QuartzCore.framework */; };
 		3A349C9212CAEA1100B73A51 /* source.mm in Sources */ = {isa = PBXBuildFile; fileRef = 3A349C9112CAEA1100B73A51 /* source.mm */; };
@@ -27,6 +25,7 @@
 		CA6C43A0189F66F60044121D /* textured.vsh in Resources */ = {isa = PBXBuildFile; fileRef = CA6C439E189F66E00044121D /* textured.vsh */; };
 		CA6C43A618A072220044121D /* texture.mm in Sources */ = {isa = PBXBuildFile; fileRef = CA6C43A418A072220044121D /* texture.mm */; };
 		CA6C43A918A073100044121D /* framebuffer.mm in Sources */ = {isa = PBXBuildFile; fileRef = CA6C43A718A073100044121D /* framebuffer.mm */; };
+		CABCE2A618A3036400A2E00D /* up.png in Resources */ = {isa = PBXBuildFile; fileRef = CABCE2A518A3036400A2E00D /* up.png */; };
 		CAF4BB49189F5C8A00C73117 /* GLKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CAF4BB48189F5C8A00C73117 /* GLKit.framework */; };
 		CAF4BB52189F5CD100C73117 /* mesh.mm in Sources */ = {isa = PBXBuildFile; fileRef = CAF4BB4B189F5CD100C73117 /* mesh.mm */; };
 		CAF4BB53189F5CD100C73117 /* program.mm in Sources */ = {isa = PBXBuildFile; fileRef = CAF4BB4D189F5CD100C73117 /* program.mm */; };
@@ -61,8 +60,6 @@
 		3A1598E111B9DDF3001E7AB5 /* character.fsh */ = {isa = PBXFileReference; explicitFileType = sourcecode.glsl; fileEncoding = 4; name = character.fsh; path = Shaders/character.fsh; sourceTree = "<group>"; };
 		3A1598E611B9DE0A001E7AB5 /* MainMenu.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = MainMenu.xib; path = Resources/OSX/MainMenu.xib; sourceTree = "<group>"; };
 		3A1598E711B9DE0A001E7AB5 /* InfoPlist.strings */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.strings; name = InfoPlist.strings; path = Resources/OSX/InfoPlist.strings; sourceTree = "<group>"; };
-		3A1598E811B9DE0A001E7AB5 /* demon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = demon.png; path = Resources/demon.png; sourceTree = "<group>"; };
-		3A1598E911B9DE0A001E7AB5 /* demon.model */ = {isa = PBXFileReference; lastKnownFileType = file; name = demon.model; path = Resources/demon.model; sourceTree = "<group>"; };
 		3A1598EE11B9DE37001E7AB5 /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
 		3A15990611B9DE6C001E7AB5 /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
 		3A349C9112CAEA1100B73A51 /* source.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = source.mm; path = UtilSrc/source.mm; sourceTree = "<group>"; };
@@ -76,6 +73,7 @@
 		CA6C43A518A072220044121D /* texture.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = texture.h; path = Classes/texture.h; sourceTree = "<group>"; };
 		CA6C43A718A073100044121D /* framebuffer.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = framebuffer.mm; sourceTree = "<group>"; };
 		CA6C43A818A073100044121D /* framebuffer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = framebuffer.h; sourceTree = "<group>"; };
+		CABCE2A518A3036400A2E00D /* up.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = up.png; sourceTree = "<group>"; };
 		CAF4BB48189F5C8A00C73117 /* GLKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = GLKit.framework; path = System/Library/Frameworks/GLKit.framework; sourceTree = SDKROOT; };
 		CAF4BB4A189F5CD100C73117 /* mesh.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = mesh.h; path = Classes/mesh.h; sourceTree = "<group>"; };
 		CAF4BB4B189F5CD100C73117 /* mesh.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = mesh.mm; path = Classes/mesh.mm; sourceTree = "<group>"; };
@@ -193,10 +191,9 @@
 		29B97317FDCFA39411CA2CEA /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				CABCE2A518A3036400A2E00D /* up.png */,
 				3A1598E611B9DE0A001E7AB5 /* MainMenu.xib */,
 				3A1598E711B9DE0A001E7AB5 /* InfoPlist.strings */,
-				3A1598E811B9DE0A001E7AB5 /* demon.png */,
-				3A1598E911B9DE0A001E7AB5 /* demon.model */,
 				8D1107310486CEB800E47090 /* OSXGLEssentials-Info.plist */,
 			);
 			name = Resources;
@@ -278,6 +275,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				CABCE2A618A3036400A2E00D /* up.png in Resources */,
 				CA6C43A0189F66F60044121D /* textured.vsh in Resources */,
 				CAF4BB5B189F609000C73117 /* deferred.fsh in Resources */,
 				CAF4BB58189F5FBE00C73117 /* deferred.vsh in Resources */,
@@ -285,8 +283,6 @@
 				3A1598E511B9DDF3001E7AB5 /* character.fsh in Resources */,
 				3A1598EA11B9DE0A001E7AB5 /* MainMenu.xib in Resources */,
 				3A1598EB11B9DE0A001E7AB5 /* InfoPlist.strings in Resources */,
-				3A1598EC11B9DE0A001E7AB5 /* demon.png in Resources */,
-				3A1598ED11B9DE0A001E7AB5 /* demon.model in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -75,6 +75,184 @@ public:
 };
 
 
+template<typename T> class voxel {
+public:
+    ivec3 size_;
+    vector<T> data_;
+
+    explicit voxel(ivec3 lmn) : size_(lmn), data_(lmn[0] * lmn[1] * lmn[2], 0) {
+    }
+    
+    T& operator()(ivec3 ijk) {
+        return data_[ijk[0] + size_[0] * (ijk[1] + size_[1] * ijk[2])];
+    }
+    
+    T operator()(vec3 v) {
+        if (!bounds(v))
+            return T{};
+        return operator()(ivec3(v.x, v.y, v.z));
+    }
+    
+    bool bounds(vec3 xyz) {
+        return ((xyz[0] >= 0)
+                && (xyz[1] >= 0)
+                && (xyz[2] >= 0)
+                && (xyz[0] < size_[0])
+                && (xyz[1] < size_[1])
+                && (xyz[2] < size_[2]));
+    }
+    
+    T& get(size_t i, size_t j, size_t k) {
+        return data_[i + size_[0] * (j + size_[1] * k)];
+    }
+    
+    shared_ptr<vao> makeVAO() {
+        vector<vertex> v;
+        vector<GLushort> e;
+        auto test = [](T t) { return t; };
+        for (size_t k = 0; k != size_[2]; ++k)
+            for (size_t j = 0; j != size_[1]; ++j)
+                for (size_t i = 0; i != size_[0]; ++i) {
+                    T a = operator()(ivec3{i, j, k});
+                    if (test(a)) {
+                        T b;
+                        
+                        if ((i == 0) || !test(b = get(i-1,j,k))) {
+                            v.push_back(vertex(i,j,k, -1,0,0, 0,0,a));
+                            v.push_back(vertex(i,j,k+1, -1,0,0, 1,0,a));
+                            v.push_back(vertex(i,j+1,k+1, -1,0,0, 1,1,a));
+                            v.push_back(vertex(i,j+1,k, -1,0,0, 0,1,a));
+                        }
+                        if ((i+1 == size_[0]) || !test(b = get(i+1,j,k))) {
+                            v.push_back(vertex(i+1,j,k, 1,0,0, 0,0,a));
+                            v.push_back(vertex(i+1,j+1,k, 1,0,0, 0,1,a));
+                            v.push_back(vertex(i+1,j+1,k+1, 1,0,0, 1,1,a));
+                            v.push_back(vertex(i+1,j,k+1, 1,0,0, 1,0,a));
+                        }
+                        if ((j == 0) || !test(b = get(i,j-1,k))) {
+                            v.push_back(vertex(i,j,k, 0,-1,0, 0,0,a));
+                            v.push_back(vertex(i+1,j,k, 0,-1,0, 1,0,a));
+                            v.push_back(vertex(i+1,j,k+1, 0,-1,0, 1,1,a));
+                            v.push_back(vertex(i,j,k+1, 0,-1,0, 0,1,a));
+                        }
+                        if ((j+1 == size_[1]) || !test(b = get(i,j+1,k))) {
+                            v.push_back(vertex(i,j+1,k, 0,+1,0, 0,0,a));
+                            v.push_back(vertex(i,j+1,k+1, 0,+1,0, 0,1,a));
+                            v.push_back(vertex(i+1,j+1,k+1, 0,+1,0, 1,1,a));
+                            v.push_back(vertex(i+1,j+1,k, 0,+1,0, 1,0,a));
+                        }
+                        
+                        if ((k == 0) || !test(b = get(i,j,k-1))) {
+                            v.push_back(vertex(i,j,k, 0,0,-1, 0,0,a));
+                            v.push_back(vertex(i,j+1,k, 0,0,-1, 0,1,a));
+                            v.push_back(vertex(i+1,j+1,k, 0,0,-1, 1,1,a));
+                            v.push_back(vertex(i+1,j,k, 0,0,-1, 1,0,a));
+                        }
+                        if ((k+1 == size_[2]) || !test(b = get(i,j,k-1))) {
+                            v.push_back(vertex(i,j,k+1, 0,0,1, 0,0,a));
+                            v.push_back(vertex(i+1,j,k+1, 0,0,1, 0,1,a));
+                            v.push_back(vertex(i+1,j+1,k+1, 0,0,1, 1,1,a));
+                            v.push_back(vertex(i,j+1,k+1, 0,0,1, 1,0,a));
+                        }
+                        
+                    }
+                }
+        for (GLushort i = 0; i != v.size(); i += 4) {
+            e.push_back(i); e.push_back(i + 1); e.push_back(i + 2);
+            e.push_back(i); e.push_back(i + 2); e.push_back(i + 3);
+        }
+        
+        return shared_ptr<vao>{new vao{v, e}};
+        
+    }
+    
+    // What should element type be?  Use it as 3d texture array index?
+    //
+    // struct {
+    //    cvec3 vertex;
+    //    cvec3 normal; // 6 possibilities
+    //    cvec3 texture_coordinates; // 4 possibilities
+    //    char // texture page?  boil with coordinates?
+    
+    // where do vertex array objects and buffers live?
+    
+    
+    
+};
+
+class interval
+{
+public:
+    explicit interval(float x) : a_(x), b_(x) {}
+    
+    void hull(float x) {
+        if (x < a_)
+            a_ = x;
+        if (x > b_)
+            b_ = x;
+    }
+    bool overlap(interval x) {
+        return (a_ > x.b_) || (b_ < x.a_);
+    }
+private:
+    float a_, b_;
+};
+
+
+bool separating_axis(mat4 b_transform) {
+    // cube ([0,0,0],[1,1,1])
+    // cube A ([0,0,0],[1,1,1])
+    
+    // candidate axes are
+    
+    vec3 a_vertices[] = {
+        vec3(0,0,0),
+        vec3(0,0,1),
+        vec3(0,1,0),
+        vec3(0,1,1),
+        vec3(1,0,0),
+        vec3(1,0,1),
+        vec3(1,1,0),
+        vec3(1,1,1)
+    };
+    
+    vec3 a_normals[] = {
+        vec3(0,0,1),
+        vec3(0,1,0),
+        vec3(1,0,0)
+    };
+    
+    vec3 b_vertices[8];
+    vec3 b_normals[8];
+    std::copy(a_vertices, a_vertices + 8, b_vertices);
+    std::copy(a_normals, a_normals + 3, b_normals);
+
+    GLKMatrix4MultiplyVector3ArrayWithTranslation(b_transform, (GLKVector3*) b_vertices, 8);
+    GLKMatrix4MultiplyVector3Array(b_transform, (GLKVector3*) b_normals, 3);
+    
+    
+    auto is_separating_axis = [&](vec3 axis) {
+        interval a{dot(a_vertices[0], axis)};
+        interval b{dot(b_vertices[0], axis)};
+        for (size_t i = 1; i != 8; ++i) {
+            a.hull(dot(a_vertices[i], axis));
+            b.hull(dot(a_vertices[i], axis));
+        }
+        return !a.overlap(b);
+    };
+
+    for (auto a : a_normals)
+        if (is_separating_axis(a))
+            return false;
+    for (auto b : b_normals)
+        if (is_separating_axis(b))
+            return false;
+    for (auto a : a_normals)
+        for (auto b : b_normals)
+            if (is_separating_axis(cross(a, b)))
+                return false;
+    return true;
+}
 
 
 class renderer_impl : public renderer
@@ -143,15 +321,27 @@ unique_ptr<renderer> renderer::factory()
 		m_viewHeight = 100;
 		
 		m_characterAngle = 0;
+
         
-		NSString* filePathName = nil;
+        
         
         auto x = make_shared<leaf>();
         m_character = x;
+
+        {
+            int n = 3;
+            voxel<char> v{ivec3(n,n,n)};
+            for (int i = 0; i != n; ++i)
+                for (int j = 0; j != n; ++j)
+                    for (int k = 0; k != n; ++k)
+                        v.get(i,j,k) = rand() & 1;
+            x->vao_ = v.makeVAO();
+        }
         
-        auto m = mesh::voxel();
+        
+        //auto m = mesh::voxel();
         //self->m_characterVAO = unique_ptr<vao>(new vao(m));
-        x->vao_ = make_shared<vao>(m);
+        //x->vao_ = make_shared<vao>(m);
         
         
 		m_camera = make_shared<camera>();
@@ -159,8 +349,9 @@ unique_ptr<renderer> renderer::factory()
 		////////////////////////////////////
 		// Load texture for our character //
 		////////////////////////////////////
-		
-		filePathName = [[NSBundle mainBundle] pathForResource:@"demon" ofType:@"png"];
+        NSString* filePathName = nil;
+
+		filePathName = [[NSBundle mainBundle] pathForResource:@"up" ofType:@"png"];
 		demoImage *image = imgLoadImage([filePathName cStringUsingEncoding:NSASCIIStringEncoding], false);
 		
 		// Build a texture object with our image data
@@ -194,7 +385,7 @@ unique_ptr<renderer> renderer::factory()
             for (int y = 0; y != 2; ++y) {
                 auto d = make_shared<leaf>();
                 d->vao_ = c;
-                d->model = translate(vec3({{(float) x, (float) y, 0.f}}));
+                d->model = translate(vec3({(float) x, (float) y, 0.f}));
                 m_displays.push_back(d);
                 a->entities.push_back(d);
             }
@@ -247,18 +438,21 @@ void renderer_impl::resize(GLuint width, GLuint height) {
 void renderer_impl::render() {
     mat4 view;
     
-       
+    
+    //NSPoint mouse = [NSEvent mouseLocation];
+    //NSLog(@"Mouse %f, %f", mouse.x, mouse.y);
+    
 	
 	// Use the program for rendering our character
 	m_characterPrg->use();
 		
     
-    view = translate(vec3{{0.f, 0.f, -20.f}}) * rotate(M_PI_2, vec3{{1.f, 0.f, 0.f}});
+    view = translate(vec3{0.f, 0.f, -20.f}) * rotate(M_PI_2, vec3{1.f, 0.f, 0.f});
     m_camera->draw(*m_characterPrg);
 
     
     
-    m_character->model = rotate(m_characterAngle/57, vec3{{0.7f, 0.3f, 0.1f}});
+    m_character->model = rotate(m_characterAngle/57, vec3{0.7f, 0.3f, 0.1f});
     
     m_deferredFBO->bind();
 
@@ -284,7 +478,7 @@ void renderer_impl::render() {
     m_displays[2]->tex_ = m_deferredFBO->color_attachment[2];
     m_displays[3]->tex_ = m_deferredFBO->depth_attachment;
     
-    m_display->draw(*m_characterPrg, translate(vec3{{1.f,-1.f,-3.f}}) * rotateY(M_PI));
+    m_display->draw(*m_characterPrg, translate(vec3{1.f,-1.f,-3.f}) * rotateY(M_PI));
     
     GetGLError();
 	

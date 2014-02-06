@@ -39,6 +39,28 @@ vao::vao(const mesh& m) : count_(m.elements.size()) {
     
     
 }
+
+
+vao::vao(vector<vertex>& v, vector<GLushort>& e) : count_(e.size()) {
+    glGenVertexArrays(1, &name_);
+    bind();
+    
+    attrib.push_back(shared_ptr<vbo>{new vbo{GL_ARRAY_BUFFER, GL_STATIC_DRAW, v}});
+    
+    glEnableVertexAttribArray(POS_ATTRIB_IDX);
+    glVertexAttribPointer(POS_ATTRIB_IDX, 3, GL_BYTE, GL_FALSE, sizeof(vertex), 0);
+    
+    glEnableVertexAttribArray(NORMAL_ATTRIB_IDX);
+    glVertexAttribPointer(NORMAL_ATTRIB_IDX, 3, GL_BYTE, GL_FALSE, sizeof(vertex), BUFFER_OFFSET(sizeof(cvec3)));
+    
+    glEnableVertexAttribArray(TEXCOORD_ATTRIB_IDX);
+    glVertexAttribPointer(TEXCOORD_ATTRIB_IDX, 3, GL_BYTE, GL_FALSE, sizeof(vertex), BUFFER_OFFSET(sizeof(cvec3)*2));
+    
+    elemen = shared_ptr<vbo>{new vbo{GL_ELEMENT_ARRAY_BUFFER, GL_STATIC_DRAW, e}};
+    
+    GetGLError();
+}
+
 vao::~vao() {
     glDeleteVertexArrays(1, &name_);
     GetGLError();

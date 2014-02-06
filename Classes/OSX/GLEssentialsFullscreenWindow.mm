@@ -28,6 +28,9 @@
 
 	// Hide this when user switches to another window (or app)
 	[self setHidesOnDeactivate:YES];
+    
+    [self setAcceptsMouseMovedEvents:YES];
+    
 
 	return self;
 }

@@ -12,6 +12,8 @@
 
 #import <GLKit/GLKit.h>
 
+#include <vector>
+
 #include "vec.h"
 
 typedef GLKMatrix3 mat3;
@@ -24,7 +26,6 @@ inline GLKMatrix3 invertAndTranspose(GLKMatrix3 a) { bool b; return GLKMatrix3In
 inline GLKMatrix3 operator*(GLKMatrix3 a, GLKMatrix3 b) { return GLKMatrix3Multiply(a, b); }
 inline GLKMatrix3 operator+(GLKMatrix3 a, GLKMatrix3 b) { return GLKMatrix3Add(a, b); }
 inline GLKMatrix3 operator-(GLKMatrix3 a, GLKMatrix3 b) { return GLKMatrix3Add(a, b); }
-inline GLKVector3 operator*(GLKMatrix3 a, GLKVector3 b) { return GLKMatrix3MultiplyVector3(a, b); }
 
 inline GLKMatrix4 transpose(GLKMatrix4 a) { return GLKMatrix4Transpose(a); }
 inline GLKMatrix4 invert(GLKMatrix4 a) { bool b; return GLKMatrix4Invert(a, &b); }
@@ -32,38 +33,49 @@ inline GLKMatrix4 invertAndTranspose(GLKMatrix4 a) { bool b; return GLKMatrix4In
 inline GLKMatrix4 operator*(GLKMatrix4 a, GLKMatrix4 b) { return GLKMatrix4Multiply(a, b); }
 inline GLKMatrix4 operator+(GLKMatrix4 a, GLKMatrix4 b) { return GLKMatrix4Add(a, b); }
 inline GLKMatrix4 operator-(GLKMatrix4 a, GLKMatrix4 b) { return GLKMatrix4Add(a, b); }
-inline GLKVector4 operator*(GLKMatrix4 a, GLKVector4 b) { return GLKMatrix4MultiplyVector4(a, b); }
 
 inline GLKMatrix3& operator*=(GLKMatrix3& a, GLKMatrix3 b) { a = a * b; return a; }
 inline GLKMatrix4& operator*=(GLKMatrix4& a, GLKMatrix4 b) { a = a * b; return a; }
 
+// marix vector
+
+inline GLKVector3 operator*(GLKMatrix3 a, GLKVector3 b) { return GLKMatrix3MultiplyVector3(a, b); }
+inline GLKVector4 operator*(GLKMatrix4 a, GLKVector4 b) { return GLKMatrix4MultiplyVector4(a, b); }
+
+// irregular
+
 inline GLKVector3 operator*(GLKMatrix4 a, GLKVector3 b) { return GLKMatrix4MultiplyVector3(a, b); }
+
 inline GLKVector3 multiplyWithTranslation(GLKMatrix4 a, GLKVector3 b) {
     return GLKMatrix4MultiplyVector3WithTranslation(a, b);
 }
 
-inline void multiply(GLKMatrix3 a, GLKVector3* b, GLKVector3* e) {
-    GLKMatrix3MultiplyVector3Array(a, b, e - b);
+// array
+
+inline void multiplyArray(GLKMatrix3 a, std::vector<vec3>& b) {
+    GLKMatrix3MultiplyVector3Array(a, reinterpret_cast<GLKVector3*>(b.data()), b.size());
 }
 
-inline void multiply(GLKMatrix4 a, GLKVector3* b, GLKVector3* e) {
-    GLKMatrix4MultiplyVector3Array(a, b, e - b);
+inline void multiplyArray(GLKMatrix4 a, std::vector<vec4>& b) {
+    GLKMatrix4MultiplyVector4Array(a, reinterpret_cast<GLKVector4*>(b.data()), b.size());
 }
 
-inline void multiply(GLKMatrix4 a, GLKVector4* b, GLKVector4* e) {
-    GLKMatrix4MultiplyVector4Array(a, b, e - b);
+inline void multiplyArray(GLKMatrix4 a, std::vector<vec3>& b) {
+    GLKMatrix4MultiplyVector3Array(a, reinterpret_cast<GLKVector3*>(b.data()), b.size());
 }
 
-inline void multiplyWithTranslation(GLKMatrix4 a, GLKVector3* b, GLKVector3* e) {
-    GLKMatrix4MultiplyVector3ArrayWithTranslation(a, b, e - b);
+inline void multiplyArrayWithTranslation(GLKMatrix4 a, std::vector<vec3>& b) {
+    GLKMatrix4MultiplyVector3ArrayWithTranslation(a, reinterpret_cast<GLKVector3*>(b.data()), b.size());
 }
+
+
 
 inline GLKMatrix4 translate(vec3 x) {
-    return GLKMatrix4MakeTranslation(x.v[0], x.v[1], x.v[2]);
+    return GLKMatrix4MakeTranslation(x[0], x[1], x[2]);
 }
 
 inline GLKMatrix4 rotate(float radians, vec3 n) {
-    return GLKMatrix4MakeRotation(radians, n.v[0], n.v[1], n.v[2]);
+    return GLKMatrix4MakeRotation(radians, n[0], n[1], n[2]);
 }
 
 inline GLKMatrix4 rotateX(float radians) {
@@ -82,7 +94,7 @@ inline GLKMatrix4 rotateZ(float radians) {
                                    
 
 inline GLKMatrix4 scale(vec3 x) {
-    return GLKMatrix4MakeScale(x.v[0], x.v[1], x.v[2]);
+    return GLKMatrix4MakeScale(x[0], x[1], x[2]);
 }
 
 const mat3 identity3 = {

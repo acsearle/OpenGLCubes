@@ -30,6 +30,9 @@ NSWindow* standardWindow;
 	{
 		// Initialize to nil since it indicates app is not fullscreen
 		fullscreenWindow = nil;
+        
+        [[self window] setAcceptsMouseMovedEvents:YES];
+        
     }
 
 	return self;
@@ -95,7 +98,7 @@ NSWindow* standardWindow;
 
 	// Show the window and make it the key window for input
 	[[self window] makeKeyAndOrderFront:self];
-
+    
 	// Release the fullscreen window
 	[fullscreenWindow release];
 
@@ -134,5 +137,18 @@ NSWindow* standardWindow;
 	// Allow other character to be handled (or not and beep)
 	[super keyDown:event];
 }
+
+- (void) mouseMoved:(NSEvent *)theEvent
+{
+    NSPoint v = [theEvent locationInWindow];
+    NSLog(@"Mouse moved %f, %f", v.x, v.y);
+}
+
+- (void) mouseDragged:(NSEvent *)theEvent
+{
+    NSPoint v = [theEvent locationInWindow];
+    NSLog(@"Mouse dragged %f, %f", v.x, v.y);
+}
+
 
 @end
