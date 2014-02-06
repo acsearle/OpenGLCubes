@@ -367,20 +367,6 @@ unique_ptr<renderer> renderer::factory()
 		
         m_deferredFBO = buildFBO(100, 100);
 
-        /*
-        auto a = make_shared<group>();
-        auto c = make_shared<vao>(*make_quad());
-        for (int x = 0; x != 2; ++x)
-            for (int y = 0; y != 2; ++y) {
-                auto d = make_shared<leaf>();
-                d->vao_ = c;
-                d->model = translate(vec3({(float) x, (float) y, 0.f}));
-                m_displays.push_back(d);
-                a->entities.push_back(d);
-            }
-        m_display = a;
-         */
-
         m_screen = shared_ptr<leaf>{new leaf};
         m_screen->vao_ = shared_ptr<vao>{new vao{*make_screen()}};
         
@@ -395,7 +381,7 @@ unique_ptr<renderer> renderer::factory()
 		glEnable(GL_DEPTH_TEST);
         
 		// We will always cull back faces for better performance
-		glDisable(GL_CULL_FACE);
+		glEnable(GL_CULL_FACE);
 		
 		// Draw our scene once without presenting the rendered image.
 		//   This is done in order to pre-warm OpenGL

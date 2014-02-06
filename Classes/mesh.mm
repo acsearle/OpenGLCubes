@@ -47,14 +47,14 @@ unique_ptr<mesh<vertex, GLuint>> make_screen() {
     v.position = cvec3(-1, -1, 0);
     v.texcoord = cvec3(0, 0, 0);
     m->vertices.push_back(v);
-    v.position = cvec3(+1, -1, 0);
-    v.texcoord = cvec3(1, 0, 0);
+    v.position = cvec3(-1, +1, 0);
+    v.texcoord = cvec3(0, 1, 0);
     m->vertices.push_back(v);
     v.position = cvec3(+1, +1, 0);
     v.texcoord = cvec3(1, 1, 0);
     m->vertices.push_back(v);
-    v.position = cvec3(-1, +1, 0);
-    v.texcoord = cvec3(0, 1, 0);
+    v.position = cvec3(+1, -1, 0);
+    v.texcoord = cvec3(1, 0, 0);
     m->vertices.push_back(v);
     
     m->elements.push_back(0);
