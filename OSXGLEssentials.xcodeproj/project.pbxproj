@@ -12,8 +12,6 @@
 		3A1598D011B9DDB0001E7AB5 /* modelUtil.mm in Sources */ = {isa = PBXBuildFile; fileRef = 3A1598C811B9DDB0001E7AB5 /* modelUtil.mm */; };
 		3A1598D211B9DDB0001E7AB5 /* imageUtil.mm in Sources */ = {isa = PBXBuildFile; fileRef = 3A1598CB11B9DDB0001E7AB5 /* imageUtil.mm */; };
 		3A1598DB11B9DDC5001E7AB5 /* renderer.mm in Sources */ = {isa = PBXBuildFile; fileRef = 3A1598D511B9DDC5001E7AB5 /* renderer.mm */; };
-		3A1598E411B9DDF3001E7AB5 /* character.vsh in Resources */ = {isa = PBXBuildFile; fileRef = 3A1598E011B9DDF3001E7AB5 /* character.vsh */; };
-		3A1598E511B9DDF3001E7AB5 /* character.fsh in Resources */ = {isa = PBXBuildFile; fileRef = 3A1598E111B9DDF3001E7AB5 /* character.fsh */; };
 		3A1598EA11B9DE0A001E7AB5 /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = 3A1598E611B9DE0A001E7AB5 /* MainMenu.xib */; };
 		3A1598EB11B9DE0A001E7AB5 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 3A1598E711B9DE0A001E7AB5 /* InfoPlist.strings */; };
 		3A1598EF11B9DE37001E7AB5 /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3A1598EE11B9DE37001E7AB5 /* OpenGL.framework */; };
@@ -22,7 +20,7 @@
 		3A4554AB14BE325400837CC3 /* GLEssentialsGLView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 3A4554A714BE1FE300837CC3 /* GLEssentialsGLView.mm */; };
 		8D11072D0486CEB800E47090 /* main.mm in Sources */ = {isa = PBXBuildFile; fileRef = 29B97316FDCFA39411CA2CEA /* main.mm */; settings = {ATTRIBUTES = (); }; };
 		8D11072F0486CEB800E47090 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */; };
-		CA6C43A0189F66F60044121D /* textured.vsh in Resources */ = {isa = PBXBuildFile; fileRef = CA6C439E189F66E00044121D /* textured.vsh */; };
+		CA6C43A0189F66F60044121D /* lighting.vsh in Resources */ = {isa = PBXBuildFile; fileRef = CA6C439E189F66E00044121D /* lighting.vsh */; };
 		CA6C43A618A072220044121D /* texture.mm in Sources */ = {isa = PBXBuildFile; fileRef = CA6C43A418A072220044121D /* texture.mm */; };
 		CA6C43A918A073100044121D /* framebuffer.mm in Sources */ = {isa = PBXBuildFile; fileRef = CA6C43A718A073100044121D /* framebuffer.mm */; };
 		CABCE2A618A3036400A2E00D /* up.png in Resources */ = {isa = PBXBuildFile; fileRef = CABCE2A518A3036400A2E00D /* up.png */; };
@@ -56,8 +54,6 @@
 		3A1598D311B9DDB0001E7AB5 /* OSXGLEssentials.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = OSXGLEssentials.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		3A1598D511B9DDC5001E7AB5 /* renderer.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = renderer.mm; path = Classes/renderer.mm; sourceTree = "<group>"; };
 		3A1598D611B9DDC5001E7AB5 /* renderer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = renderer.h; path = Classes/renderer.h; sourceTree = "<group>"; };
-		3A1598E011B9DDF3001E7AB5 /* character.vsh */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.glsl; name = character.vsh; path = Shaders/character.vsh; sourceTree = "<group>"; };
-		3A1598E111B9DDF3001E7AB5 /* character.fsh */ = {isa = PBXFileReference; explicitFileType = sourcecode.glsl; fileEncoding = 4; name = character.fsh; path = Shaders/character.fsh; sourceTree = "<group>"; };
 		3A1598E611B9DE0A001E7AB5 /* MainMenu.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = MainMenu.xib; path = Resources/OSX/MainMenu.xib; sourceTree = "<group>"; };
 		3A1598E711B9DE0A001E7AB5 /* InfoPlist.strings */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.strings; name = InfoPlist.strings; path = Resources/OSX/InfoPlist.strings; sourceTree = "<group>"; };
 		3A1598EE11B9DE37001E7AB5 /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
@@ -66,8 +62,8 @@
 		3A4554A614BE1FE300837CC3 /* GLEssentialsGLView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = GLEssentialsGLView.h; path = Classes/OSX/GLEssentialsGLView.h; sourceTree = "<group>"; };
 		3A4554A714BE1FE300837CC3 /* GLEssentialsGLView.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; name = GLEssentialsGLView.mm; path = Classes/OSX/GLEssentialsGLView.mm; sourceTree = "<group>"; };
 		8D1107310486CEB800E47090 /* OSXGLEssentials-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "OSXGLEssentials-Info.plist"; sourceTree = "<group>"; };
-		CA6C439E189F66E00044121D /* textured.vsh */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.glsl; name = textured.vsh; path = Shaders/textured.vsh; sourceTree = "<group>"; };
-		CA6C43A1189F6B850044121D /* textured.fsh */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.glsl; name = textured.fsh; path = Shaders/textured.fsh; sourceTree = "<group>"; };
+		CA6C439E189F66E00044121D /* lighting.vsh */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.glsl; name = lighting.vsh; path = Shaders/lighting.vsh; sourceTree = "<group>"; };
+		CA6C43A1189F6B850044121D /* lighting.fsh */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.glsl; name = lighting.fsh; path = Shaders/lighting.fsh; sourceTree = "<group>"; };
 		CA6C43A318A051CB0044121D /* named.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = named.h; path = Classes/named.h; sourceTree = "<group>"; };
 		CA6C43A418A072220044121D /* texture.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = texture.mm; path = Classes/texture.mm; sourceTree = "<group>"; };
 		CA6C43A518A072220044121D /* texture.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = texture.h; path = Classes/texture.h; sourceTree = "<group>"; };
@@ -212,12 +208,10 @@
 		3A1598C211B9DD84001E7AB5 /* Shaders */ = {
 			isa = PBXGroup;
 			children = (
-				3A1598E011B9DDF3001E7AB5 /* character.vsh */,
-				3A1598E111B9DDF3001E7AB5 /* character.fsh */,
 				CAF4BB56189F5F8100C73117 /* deferred.vsh */,
 				CAF4BB59189F603700C73117 /* deferred.fsh */,
-				CA6C439E189F66E00044121D /* textured.vsh */,
-				CA6C43A1189F6B850044121D /* textured.fsh */,
+				CA6C439E189F66E00044121D /* lighting.vsh */,
+				CA6C43A1189F6B850044121D /* lighting.fsh */,
 			);
 			name = Shaders;
 			sourceTree = "<group>";
@@ -276,11 +270,9 @@
 			buildActionMask = 2147483647;
 			files = (
 				CABCE2A618A3036400A2E00D /* up.png in Resources */,
-				CA6C43A0189F66F60044121D /* textured.vsh in Resources */,
+				CA6C43A0189F66F60044121D /* lighting.vsh in Resources */,
 				CAF4BB5B189F609000C73117 /* deferred.fsh in Resources */,
 				CAF4BB58189F5FBE00C73117 /* deferred.vsh in Resources */,
-				3A1598E411B9DDF3001E7AB5 /* character.vsh in Resources */,
-				3A1598E511B9DDF3001E7AB5 /* character.fsh in Resources */,
 				3A1598EA11B9DE0A001E7AB5 /* MainMenu.xib in Resources */,
 				3A1598EB11B9DE0A001E7AB5 /* InfoPlist.strings in Resources */,
 			);

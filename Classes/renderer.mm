@@ -46,7 +46,8 @@ public:
     {
         p["modelViewMatrix"] = view * model;
         p["inverseTransposeModelViewMatrix"] = invertAndTranspose(view * model);
-        tex_->bind();
+        if (tex_)
+            tex_->bind();
         vao_->bind().draw();
     }
 };
@@ -107,8 +108,7 @@ public:
     }
     
     shared_ptr<vao> makeVAO() {
-        vector<vertex> v;
-        vector<GLushort> e;
+        mesh<vertex, GLuint> m;
         auto test = [](T t) { return t; };
         for (size_t k = 0; k != size_[2]; ++k)
             for (size_t j = 0; j != size_[1]; ++j)
@@ -118,65 +118,55 @@ public:
                         T b;
                         
                         if ((i == 0) || !test(b = get(i-1,j,k))) {
-                            v.push_back(vertex(i,j,k, -1,0,0, 0,0,a));
-                            v.push_back(vertex(i,j,k+1, -1,0,0, 1,0,a));
-                            v.push_back(vertex(i,j+1,k+1, -1,0,0, 1,1,a));
-                            v.push_back(vertex(i,j+1,k, -1,0,0, 0,1,a));
+                            m.vertices.push_back(vertex(i,j,k, -1,0,0, 0,0,a));
+                            m.vertices.push_back(vertex(i,j,k+1, -1,0,0, 1,0,a));
+                            m.vertices.push_back(vertex(i,j+1,k+1, -1,0,0, 1,1,a));
+                            m.vertices.push_back(vertex(i,j+1,k, -1,0,0, 0,1,a));
                         }
                         if ((i+1 == size_[0]) || !test(b = get(i+1,j,k))) {
-                            v.push_back(vertex(i+1,j,k, 1,0,0, 0,0,a));
-                            v.push_back(vertex(i+1,j+1,k, 1,0,0, 0,1,a));
-                            v.push_back(vertex(i+1,j+1,k+1, 1,0,0, 1,1,a));
-                            v.push_back(vertex(i+1,j,k+1, 1,0,0, 1,0,a));
+                            m.vertices.push_back(vertex(i+1,j,k, 1,0,0, 0,0,a));
+                            m.vertices.push_back(vertex(i+1,j+1,k, 1,0,0, 0,1,a));
+                            m.vertices.push_back(vertex(i+1,j+1,k+1, 1,0,0, 1,1,a));
+                            m.vertices.push_back(vertex(i+1,j,k+1, 1,0,0, 1,0,a));
                         }
                         if ((j == 0) || !test(b = get(i,j-1,k))) {
-                            v.push_back(vertex(i,j,k, 0,-1,0, 0,0,a));
-                            v.push_back(vertex(i+1,j,k, 0,-1,0, 1,0,a));
-                            v.push_back(vertex(i+1,j,k+1, 0,-1,0, 1,1,a));
-                            v.push_back(vertex(i,j,k+1, 0,-1,0, 0,1,a));
+                            m.vertices.push_back(vertex(i,j,k, 0,-1,0, 0,0,a));
+                            m.vertices.push_back(vertex(i+1,j,k, 0,-1,0, 1,0,a));
+                            m.vertices.push_back(vertex(i+1,j,k+1, 0,-1,0, 1,1,a));
+                            m.vertices.push_back(vertex(i,j,k+1, 0,-1,0, 0,1,a));
                         }
                         if ((j+1 == size_[1]) || !test(b = get(i,j+1,k))) {
-                            v.push_back(vertex(i,j+1,k, 0,+1,0, 0,0,a));
-                            v.push_back(vertex(i,j+1,k+1, 0,+1,0, 0,1,a));
-                            v.push_back(vertex(i+1,j+1,k+1, 0,+1,0, 1,1,a));
-                            v.push_back(vertex(i+1,j+1,k, 0,+1,0, 1,0,a));
+                            m.vertices.push_back(vertex(i,j+1,k, 0,+1,0, 0,0,a));
+                            m.vertices.push_back(vertex(i,j+1,k+1, 0,+1,0, 0,1,a));
+                            m.vertices.push_back(vertex(i+1,j+1,k+1, 0,+1,0, 1,1,a));
+                            m.vertices.push_back(vertex(i+1,j+1,k, 0,+1,0, 1,0,a));
                         }
                         
                         if ((k == 0) || !test(b = get(i,j,k-1))) {
-                            v.push_back(vertex(i,j,k, 0,0,-1, 0,0,a));
-                            v.push_back(vertex(i,j+1,k, 0,0,-1, 0,1,a));
-                            v.push_back(vertex(i+1,j+1,k, 0,0,-1, 1,1,a));
-                            v.push_back(vertex(i+1,j,k, 0,0,-1, 1,0,a));
+                            m.vertices.push_back(vertex(i,j,k, 0,0,-1, 0,0,a));
+                            m.vertices.push_back(vertex(i,j+1,k, 0,0,-1, 0,1,a));
+                            m.vertices.push_back(vertex(i+1,j+1,k, 0,0,-1, 1,1,a));
+                            m.vertices.push_back(vertex(i+1,j,k, 0,0,-1, 1,0,a));
                         }
                         if ((k+1 == size_[2]) || !test(b = get(i,j,k-1))) {
-                            v.push_back(vertex(i,j,k+1, 0,0,1, 0,0,a));
-                            v.push_back(vertex(i+1,j,k+1, 0,0,1, 0,1,a));
-                            v.push_back(vertex(i+1,j+1,k+1, 0,0,1, 1,1,a));
-                            v.push_back(vertex(i,j+1,k+1, 0,0,1, 1,0,a));
+                            m.vertices.push_back(vertex(i,j,k+1, 0,0,1, 0,0,a));
+                            m.vertices.push_back(vertex(i+1,j,k+1, 0,0,1, 0,1,a));
+                            m.vertices.push_back(vertex(i+1,j+1,k+1, 0,0,1, 1,1,a));
+                            m.vertices.push_back(vertex(i,j+1,k+1, 0,0,1, 1,0,a));
                         }
                         
                     }
                 }
-        for (GLushort i = 0; i != v.size(); i += 4) {
-            e.push_back(i); e.push_back(i + 1); e.push_back(i + 2);
-            e.push_back(i); e.push_back(i + 2); e.push_back(i + 3);
+        for (GLushort i = 0; i != m.vertices.size(); i += 4) {
+            m.elements.push_back(i); m.elements.push_back(i + 1); m.elements.push_back(i + 2);
+            m.elements.push_back(i); m.elements.push_back(i + 2); m.elements.push_back(i + 3);
         }
         
-        return shared_ptr<vao>{new vao{v, e}};
+        return shared_ptr<vao>{new vao{m}};
         
     }
     
-    // What should element type be?  Use it as 3d texture array index?
-    //
-    // struct {
-    //    cvec3 vertex;
-    //    cvec3 normal; // 6 possibilities
-    //    cvec3 texture_coordinates; // 4 possibilities
-    //    char // texture page?  boil with coordinates?
-    
     // where do vertex array objects and buffers live?
-    
-    
     
 };
 
@@ -266,9 +256,7 @@ public:
     
     shared_ptr<camera> m_camera;
     shared_ptr<entity> m_character;
-    shared_ptr<entity> m_display;
-    
-    vector<shared_ptr<leaf>> m_displays;
+    shared_ptr<leaf> m_screen;
     
     GLfloat m_characterAngle;
     unique_ptr<framebuffer> m_deferredFBO;
@@ -379,8 +367,9 @@ unique_ptr<renderer> renderer::factory()
 		
         m_deferredFBO = buildFBO(100, 100);
 
+        /*
         auto a = make_shared<group>();
-        auto c = make_shared<vao>(mesh::quad());
+        auto c = make_shared<vao>(*make_quad());
         for (int x = 0; x != 2; ++x)
             for (int y = 0; y != 2; ++y) {
                 auto d = make_shared<leaf>();
@@ -390,6 +379,11 @@ unique_ptr<renderer> renderer::factory()
                 a->entities.push_back(d);
             }
         m_display = a;
+         */
+
+        m_screen = shared_ptr<leaf>{new leaf};
+        m_screen->vao_ = shared_ptr<vao>{new vao{*make_screen()}};
+        
         
         
         
@@ -401,7 +395,7 @@ unique_ptr<renderer> renderer::factory()
 		glEnable(GL_DEPTH_TEST);
         
 		// We will always cull back faces for better performance
-		glEnable(GL_CULL_FACE);
+		glDisable(GL_CULL_FACE);
 		
 		// Draw our scene once without presenting the rendered image.
 		//   This is done in order to pre-warm OpenGL
@@ -470,15 +464,19 @@ void renderer_impl::render() {
     glClearColor(0,1,0,0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    //m_display->draw(*m_characterPrg, translate(vec3{{0.f,0.f,-3.f}}) * rotateX(M_PI));
-    //m_character->draw(*m_characterPrg, view);
     
-    m_displays[0]->tex_ = m_deferredFBO->color_attachment[0];
+    camera().draw(*m_characterPrg);
+    
+    
+    //m_displays[0]->tex_ = m_deferredFBO->color_attachment[0];
+    m_screen->tex_ = m_deferredFBO->color_attachment[rand() % 3];
+    /*
     m_displays[1]->tex_ = m_deferredFBO->color_attachment[1];
     m_displays[2]->tex_ = m_deferredFBO->color_attachment[2];
     m_displays[3]->tex_ = m_deferredFBO->depth_attachment;
-    
-    m_display->draw(*m_characterPrg, translate(vec3{1.f,-1.f,-3.f}) * rotateY(M_PI));
+    */
+    //m_display->draw(*m_characterPrg, translate(vec3{1.f,-1.f,-3.f}) * rotateY(M_PI));
+    m_screen->draw(*m_characterPrg, identity4);
     
     GetGLError();
 	

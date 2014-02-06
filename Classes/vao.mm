@@ -11,52 +11,24 @@
 
 using namespace std;
 
-vao::vao(const mesh& m) : count_(m.elements.size()) {
-    glGenVertexArrays(1, &name_);
-    bind();
-
-    GLuint maxVertexAttribs;
-    glGetIntegerv(GL_MAX_VERTEX_ATTRIBS, (GLint*) &maxVertexAttribs);
-    attrib.resize(maxVertexAttribs);
-    
-    attrib[POS_ATTRIB_IDX] = shared_ptr<vbo>(new vbo(GL_ARRAY_BUFFER, GL_STATIC_DRAW, m.vertex.begin(), m.vertex.end()));
-    glEnableVertexAttribArray(POS_ATTRIB_IDX);
-    glVertexAttribPointer(POS_ATTRIB_IDX, 3, GL_FLOAT, GL_FALSE, sizeof(vec3), BUFFER_OFFSET(0));
-    
-    
-    attrib[NORMAL_ATTRIB_IDX] = shared_ptr<vbo>(new vbo(GL_ARRAY_BUFFER, GL_STATIC_DRAW, m.normal.begin(), m.normal.end()));
-    glEnableVertexAttribArray(NORMAL_ATTRIB_IDX);
-    glVertexAttribPointer(NORMAL_ATTRIB_IDX, 3, GL_FLOAT, GL_FALSE, sizeof(vec3), BUFFER_OFFSET(0));
-    
-    
-    attrib[TEXCOORD_ATTRIB_IDX] = shared_ptr<vbo>(new vbo(GL_ARRAY_BUFFER, GL_STATIC_DRAW, m.texcoord.begin(), m.texcoord.end()));
-    glEnableVertexAttribArray(TEXCOORD_ATTRIB_IDX);
-    glVertexAttribPointer(TEXCOORD_ATTRIB_IDX, 2, GL_FLOAT, GL_FALSE, sizeof(vec2), BUFFER_OFFSET(0));
-    
-    elemen = shared_ptr<vbo>(new vbo(GL_ELEMENT_ARRAY_BUFFER, GL_STATIC_DRAW, m.elements.begin(), m.elements.end()));
-    
-    GetGLError();
-    
-    
-}
 
 
-vao::vao(vector<vertex>& v, vector<GLushort>& e) : count_(e.size()) {
+vao::vao(const mesh<vertex, GLuint>& m) : count_(m.elements.size()), type_(GL_UNSIGNED_INT) {
     glGenVertexArrays(1, &name_);
     bind();
     
-    attrib.push_back(shared_ptr<vbo>{new vbo{GL_ARRAY_BUFFER, GL_STATIC_DRAW, v}});
+    attrib.push_back(shared_ptr<vbo>{new vbo{GL_ARRAY_BUFFER, GL_STATIC_DRAW, m.vertices}});
     
     glEnableVertexAttribArray(POS_ATTRIB_IDX);
-    glVertexAttribPointer(POS_ATTRIB_IDX, 3, GL_BYTE, GL_FALSE, sizeof(vertex), 0);
+    glVertexAttribPointer(POS_ATTRIB_IDX, 3, GL_BYTE, GL_FALSE, sizeof(vertex), BUFFER_OFFSET(0));
     
     glEnableVertexAttribArray(NORMAL_ATTRIB_IDX);
-    glVertexAttribPointer(NORMAL_ATTRIB_IDX, 3, GL_BYTE, GL_FALSE, sizeof(vertex), BUFFER_OFFSET(sizeof(cvec3)));
+    glVertexAttribPointer(NORMAL_ATTRIB_IDX, 3, GL_BYTE, GL_FALSE, sizeof(vertex), BUFFER_OFFSET(3));
     
     glEnableVertexAttribArray(TEXCOORD_ATTRIB_IDX);
-    glVertexAttribPointer(TEXCOORD_ATTRIB_IDX, 3, GL_BYTE, GL_FALSE, sizeof(vertex), BUFFER_OFFSET(sizeof(cvec3)*2));
+    glVertexAttribPointer(TEXCOORD_ATTRIB_IDX, 3, GL_BYTE, GL_FALSE, sizeof(vertex), BUFFER_OFFSET(6));
     
-    elemen = shared_ptr<vbo>{new vbo{GL_ELEMENT_ARRAY_BUFFER, GL_STATIC_DRAW, e}};
+    elemen = shared_ptr<vbo>{new vbo{GL_ELEMENT_ARRAY_BUFFER, GL_STATIC_DRAW, m.elements}};
     
     GetGLError();
 }
@@ -72,6 +44,6 @@ vao& vao::bind() {
 }
 
 vao& vao::draw() {
-    glDrawElements(GL_TRIANGLES, count_, GL_UNSIGNED_SHORT, 0);
+    glDrawElements(GL_TRIANGLES, count_, GL_UNSIGNED_INT, 0);
     return *this;
 }

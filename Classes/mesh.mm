@@ -8,104 +8,81 @@
 
 #include "mesh.h"
 
+using namespace std;
 
- mesh mesh::quad() {
-    mesh m;
+unique_ptr<mesh<vertex, GLuint>> make_quad() {
+    unique_ptr<mesh<vertex, GLuint>> m{new mesh<vertex, GLuint>};
     
-    m.vertex.push_back(vec3(0.f, 0.f, 0.f));
-    m.vertex.push_back(vec3(1.f, 0.f, 0.f));
-    m.vertex.push_back(vec3(1.f, 1.f, 0.f));
-    m.vertex.push_back(vec3(0.f, 1.f, 0.f));
-    m.elements.push_back(0);
-    m.elements.push_back(2);
-    m.elements.push_back(1);
-    m.elements.push_back(0);
-    m.elements.push_back(3);
-    m.elements.push_back(2);
-    m.texcoord.push_back(vec2(0.f, 0.f));
-    m.texcoord.push_back(vec2(1.f, 0.f));
-    m.texcoord.push_back(vec2(1.f, 1.f));
-    m.texcoord.push_back(vec2(0.f, 1.f));
-    m.normal.insert(m.normal.end(), 4, vec3(0.f, 0.f, 1.f));
+    vertex v;
+
+    v.normal = cvec3(0, 0, 1); // Constant
+
+    v.position = v.texcoord = cvec3(0, 0, 0);
+    m->vertices.push_back(v);
+    v.position = v.texcoord = cvec3(1, 0, 0);
+    m->vertices.push_back(v);
+    v.position = v.texcoord = cvec3(1, 1, 0);
+    m->vertices.push_back(v);
+    v.position = v.texcoord = cvec3(0, 1, 0);
+    m->vertices.push_back(v);
+
+    m->elements.push_back(0);
+    m->elements.push_back(2);
+    m->elements.push_back(1);
+    m->elements.push_back(0);
+    m->elements.push_back(3);
+    m->elements.push_back(2);
+    
     return m;
 }
 
-void mesh::append(mesh m)
+
+unique_ptr<mesh<vertex, GLuint>> make_screen() {
+    unique_ptr<mesh<vertex, GLuint>> m{new mesh<vertex, GLuint>};
+    
+    vertex v;
+    
+    v.normal = cvec3(0, 0, 1); // Constant
+    
+    v.position = cvec3(-1, -1, 0);
+    v.texcoord = cvec3(0, 0, 0);
+    m->vertices.push_back(v);
+    v.position = cvec3(+1, -1, 0);
+    v.texcoord = cvec3(1, 0, 0);
+    m->vertices.push_back(v);
+    v.position = cvec3(+1, +1, 0);
+    v.texcoord = cvec3(1, 1, 0);
+    m->vertices.push_back(v);
+    v.position = cvec3(-1, +1, 0);
+    v.texcoord = cvec3(0, 1, 0);
+    m->vertices.push_back(v);
+    
+    m->elements.push_back(0);
+    m->elements.push_back(2);
+    m->elements.push_back(1);
+    m->elements.push_back(0);
+    m->elements.push_back(3);
+    m->elements.push_back(2);
+    
+    return m;
+}
+
+
+/*
+template<typename V, typename E> void mesh<V, E>::append(const mesh<V, E>& m)
 {
-    size_t n = vertex.size();
+    size_t n = vertices.size();
     for (auto e : m.elements)
         elements.push_back(e + n);
-    vertex.insert(vertex.end(), m.vertex.begin(), m.vertex.end());
-    texcoord.insert(texcoord.end(), m.texcoord.begin(), m.texcoord.end());
-    normal.insert(normal.end(), m.normal.begin(), m.normal.end());
+    vertices.insert(vertices.end(), m.vertices.begin(), m.vertices.end());
 }
 
-void mesh::apply(mat4 a)
+template<typename V, typename E> void mesh<V, E>::apply(mat4 a)
 {
     mat4 b = invertAndTranspose(a);
-    multiplyArrayWithTranslation(a, vertex);
-    multiplyArray(b, normal);
+    for (V& v : vertices) {
+        v.position = multiplyWithTranslation(a, v.position);
+        v.normal = b * v.normal;
+    }
 }
-
-mesh mesh::voxel()
-{
-    mesh m;
-    auto f = [](int x, int y, int z) -> bool {
-        /*
-         double r = sqrt(x*x+y*y)-8;
-         return (r*r + z*z) > 20;
-         */
-        double z2 = z + (x*x+y*y)/16.0;
-        return x*x+y*y+z2*z2*16 > 100;
-        
-    };
-    
-    for (int i = -16; i != +16; ++i)
-        for (int j = -16; j != +16; ++j)
-            for (int k = -16; k != +16; ++k)
-            {
-                if (f(i,j,k) > f(i,j,k+1)) {
-                    mesh q = quad();
-                    q.apply(translate(vec3{(float)i,(float)j,(float)k}));
-                    m.append(q);
-                }
-                if (f(i,j,k) < f(i,j,k+1)) {
-                    mesh q = quad();
-                    q.apply(rotate(M_PI,vec3{1.f,1.f,0.f}));
-                    q.apply(translate(vec3{(float)i,(float)j,(float)k}));
-                    m.append(q);
-                }
-                
-                if (f(i,j,k) < f(i,j+1,k)) {
-                    mesh q = quad();
-                    q.apply(rotate(M_PI_2, vec3{1.f,0.f,0.f}));
-                    q.apply(translate(vec3{(float)i,(float)j+1,(float)k-1}));
-                    m.append(q);
-                }
-                if (f(i,j,k) > f(i,j+1,k)) {
-                    mesh q = quad();
-                    q.apply(rotate(M_PI,vec3{1.f,1.f,0.f}));
-                    q.apply(rotate(M_PI_2, vec3{1.f,0.f,0.f}));
-                    q.apply(translate(vec3{(float)i,(float)j+1,(float)k-1}));
-                    m.append(q);
-                }
-                
-                if (f(i,j,k) < f(i+1,j,k)) {
-                    mesh q = quad();
-                    q.apply(rotate(-M_PI_2, vec3{0.f,1.f,0.f}));
-                    q.apply(translate(vec3{(float)i+1,(float)j,(float)k-1}));
-                    m.append(q);
-                }
-                if (f(i,j,k) > f(i+1,j,k)) {
-                    mesh q = quad();
-                    q.apply(rotate(M_PI,vec3{1.f,1.f,0.f}));
-                    q.apply(rotate(-M_PI_2, vec3{0.f,1.f,0.f}));
-                    q.apply(translate(vec3{(float)i+1,(float)j,(float)k-1}));
-                    m.append(q);
-                }
-                
-                
-            }
-    return m;
-}
-
+*/

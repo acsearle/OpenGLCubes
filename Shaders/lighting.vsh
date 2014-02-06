@@ -1,5 +1,3 @@
-uniform mat4 viewMatrix;
-
 in vec4  inPosition;
 in vec2  inTexcoord;
 

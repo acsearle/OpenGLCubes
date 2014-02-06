@@ -4,14 +4,9 @@
 #import <Foundation/Foundation.h>
 
 #include <memory>
-enum {
-	POS_ATTRIB_IDX,
-	NORMAL_ATTRIB_IDX,
-	TEXCOORD_ATTRIB_IDX
-};
 
 
-#define BUFFER_OFFSET(i) ((char *)nullptr + (i))
+
 
 class renderer {
 public:

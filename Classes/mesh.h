@@ -6,8 +6,8 @@
 //
 //
 
-#ifndef __OSXGLEssentials__model__
-#define __OSXGLEssentials__model__
+#ifndef __OSXGLEssentials__mesh__
+#define __OSXGLEssentials__mesh__
 
 #include <iostream>
 
@@ -15,25 +15,38 @@
 #include "vec.h"
 #include "mat.h"
 
-
-class mesh {
+class vertex {
 public:
-    std::vector<vec3> vertex;
-    std::vector<vec3> normal;
-    std::vector<vec2> texcoord;
-    std::vector<GLshort> elements;
-    
-    static mesh quad();
-    
-    void append(mesh m);
-    
-    void apply(mat4 a);
-    
-    
-    
-    static mesh voxel();
+    cvec3 position;
+    cvec3 normal;
+    cvec3 texcoord;
+    vertex() {}
+    vertex(char x , char y , char z ,
+           char nx, char ny, char nz,
+           char s , char t , char p )
+    : position(x,y,z)
+    , normal(nx, ny, nz)
+    , texcoord(s,t,p) {
+    }
 };
 
 
+template<typename V, typename E> class mesh {
+public:
+    std::vector<V> vertices;
+    std::vector<E> elements;
+    
+    
+    /*
+    void append(const mesh& m);
+    
+    void apply(mat4 a);
+    */
+    
+    
+};
 
-#endif /* defined(__OSXGLEssentials__model__) */
+std::unique_ptr<mesh<vertex, GLuint>> make_quad();
+std::unique_ptr<mesh<vertex, GLuint>> make_screen();
+
+#endif /* defined(__OSXGLEssentials__mesh__) */
