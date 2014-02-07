@@ -138,6 +138,7 @@ NSWindow* standardWindow;
 	[super keyDown:event];
 }
 
+/*
 - (void) mouseMoved:(NSEvent *)theEvent
 {
     NSPoint v = [theEvent locationInWindow];
@@ -149,6 +150,6 @@ NSWindow* standardWindow;
     NSPoint v = [theEvent locationInWindow];
     NSLog(@"Mouse dragged %f, %f", v.x, v.y);
 }
-
+*/
 
 @end

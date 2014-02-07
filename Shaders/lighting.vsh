@@ -5,6 +5,6 @@ out vec2 varTexcoord;
 
 void main (void)
 {
-	gl_Position	= viewMatrix * inPosition;
+	gl_Position	= inPosition;
     varTexcoord = inTexcoord;
 }

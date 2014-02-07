@@ -90,9 +90,6 @@ inline GLKMatrix4 rotateZ(float radians) {
     return GLKMatrix4MakeZRotation(radians);
 }
 
-                                   
-                                   
-
 inline GLKMatrix4 scale(vec3 x) {
     return GLKMatrix4MakeScale(x[0], x[1], x[2]);
 }

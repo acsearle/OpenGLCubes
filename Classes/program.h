@@ -46,6 +46,9 @@ public:
         void operator=(mat4 a) {
             glUniformMatrix4fv(location_, 1, GL_FALSE, a.m);
         }
+        void operator=(GLint a) {
+            glUniform1i(location_, a);
+        }
     };
     
     uniform operator[](const GLchar* name) {

@@ -12,6 +12,7 @@
 #import "source.h"
 #import "vec.h"
 
+#import <OpenGL/gl3ext.h>
 
 #include <iostream>
 #include <map>
@@ -52,8 +53,6 @@ public:
     }
 };
 
-class spotlight : public entity {
-};
 
 class group : public entity {
 public:
@@ -67,11 +66,32 @@ public:
 
 class camera {
 public:
+    mat4 view_;
     mat4 projection_;
     camera() : projection_(identity4) {}
     
     void draw(program& p) {
-        p["projectionMatrix"] = projection_;
+        p["cameraViewMatrix"] = view_;
+        p["cameraInverseViewMatrix"] = invert(view_);
+        p["cameraProjectionMatrix"] = projection_;
+        p["cameraInverseProjectionMatrix"] = invert(projection_);
+    }
+};
+
+class spotlight {
+public:
+    mat4 view_;
+    mat4 projection_;
+    spotlight() : projection_(identity4) {}
+    void draw(program& p) {
+        p["spotlightViewMatrix"] = view_;
+        p["spotlightInverseViewMatrix"] = invert(view_);
+        p["spotlightProjectionMatrix"] = projection_;
+        p["spotlightInverseProjectionMatrix"] = invert(projection_);
+    }
+    void drawAsCamera(program& p) {
+        p["cameraProjectionMatrix"] = projection_ * view_;
+        p["cameraInverseProjectionMatrix"] = invert(projection_ * view_);
     }
 };
 
@@ -148,7 +168,7 @@ public:
                             m.vertices.push_back(vertex(i+1,j+1,k, 0,0,-1, 1,1,a));
                             m.vertices.push_back(vertex(i+1,j,k, 0,0,-1, 1,0,a));
                         }
-                        if ((k+1 == size_[2]) || !test(b = get(i,j,k-1))) {
+                        if ((k+1 == size_[2]) || !test(b = get(i,j,k+1))) {
                             m.vertices.push_back(vertex(i,j,k+1, 0,0,1, 0,0,a));
                             m.vertices.push_back(vertex(i+1,j,k+1, 0,0,1, 0,1,a));
                             m.vertices.push_back(vertex(i+1,j+1,k+1, 0,0,1, 1,1,a));
@@ -251,16 +271,17 @@ public:
     GLuint m_defaultFBOName;
     
     shared_ptr<program> m_characterPrg;
-    //unique_ptr<vao> m_characterVAO;
-    //shared_ptr<texture2d> m_characterTex;
+    shared_ptr<program> m_lightingPrg;
     
     shared_ptr<camera> m_camera;
     shared_ptr<entity> m_character;
     shared_ptr<leaf> m_screen;
     
+    shared_ptr<texture2d> m_texture;
+    
     GLfloat m_characterAngle;
     unique_ptr<framebuffer> m_deferredFBO;
-    //unique_ptr<vao> m_quadVAO;
+    unique_ptr<framebuffer> m_shadowFBO;
     
     GLuint m_viewWidth;
     GLuint m_viewHeight;
@@ -272,7 +293,8 @@ public:
     virtual void render();
 
     unique_ptr<framebuffer> buildFBO(GLuint width, GLuint height);
-    unique_ptr<texture2d> buildTexture(demoImage* image);
+    unique_ptr<framebuffer> buildShadowFBO(GLuint width, GLuint height);
+    unique_ptr<texture2d> buildTexture(string);
     
     unique_ptr<program> buildProgramFromFile(string);
 
@@ -297,98 +319,52 @@ unique_ptr<renderer> renderer::factory()
     renderer_impl::renderer_impl()
 	{
 		NSLog(@"%s %s", glGetString(GL_RENDERER), glGetString(GL_VERSION));
-		
-    
         
-		////////////////////////////////////////////////////
-		// Build all of our and setup initial state here  //
-		// Don't wait until our real time run loop begins //
-		////////////////////////////////////////////////////
-				
 		m_viewWidth = 100;
 		m_viewHeight = 100;
 		
 		m_characterAngle = 0;
 
+		m_camera = make_shared<camera>();
         
+        m_texture = buildTexture("up");
         
-        
-        auto x = make_shared<leaf>();
-        m_character = x;
-
+        // Make the voxel object
         {
-            int n = 3;
-            voxel<char> v{ivec3(n,n,n)};
-            for (int i = 0; i != n; ++i)
-                for (int j = 0; j != n; ++j)
-                    for (int k = 0; k != n; ++k)
+            auto x = make_shared<leaf>();
+
+            // Set random voxels
+            voxel<char> v{ivec3(16, 2, 16)};
+            for (int i = 0; i != v.size_[0]; ++i)
+                for (int j = 0; j != v.size_[1]; ++j)
+                    for (int k = 0; k != v.size_[2]; ++k)
                         v.get(i,j,k) = rand() & 1;
             x->vao_ = v.makeVAO();
+            
+            x->tex_ = m_texture;
+            x->model = translate(vec3(-8, -2, -8));
+            
+            m_character = x;
+        }
+
+        
+        // Build Program
+		m_characterPrg = buildProgramFromFile("deferred");
+        m_lightingPrg = buildProgramFromFile("lighting");
+		
+        m_deferredFBO = buildFBO(100, 100);
+        m_shadowFBO = buildShadowFBO(1024, 1024);
+
+        {
+            m_screen = shared_ptr<leaf>{new leaf};
+            m_screen->vao_ = shared_ptr<vao>{new vao{*make_screen()}};
         }
         
         
-        //auto m = mesh::voxel();
-        //self->m_characterVAO = unique_ptr<vao>(new vao(m));
-        //x->vao_ = make_shared<vao>(m);
+        glEnable(GL_DEPTH_TEST);
+        glEnable(GL_CULL_FACE);
         
         
-		m_camera = make_shared<camera>();
-		
-		////////////////////////////////////
-		// Load texture for our character //
-		////////////////////////////////////
-        NSString* filePathName = nil;
-
-		filePathName = [[NSBundle mainBundle] pathForResource:@"up" ofType:@"png"];
-		demoImage *image = imgLoadImage([filePathName cStringUsingEncoding:NSASCIIStringEncoding], false);
-		
-		// Build a texture object with our image data
-		//self->m_characterTex = self->buildTexture(image);
-        shared_ptr<texture2d> demonTexture = buildTexture(image);
-        x->tex_ = demonTexture;
-		
-		// We can destroy the image once it's loaded into GL
-		imgDestroyImage(image);
-        
-        
-        
-        
-		
-		////////////////////////////////////////////////////
-		// Load and Setup shaders for character rendering //
-		////////////////////////////////////////////////////
-		
-		//demoSource *vtxSource = NULL;
-		//demoSource *frgSource = NULL;
-        string vtxSource, frgSource;
-		
-		// Build Program
-		m_characterPrg = buildProgramFromFile("deferred");
-		
-        m_deferredFBO = buildFBO(100, 100);
-
-        m_screen = shared_ptr<leaf>{new leaf};
-        m_screen->vao_ = shared_ptr<vao>{new vao{*make_screen()}};
-        
-        
-        
-        
-		////////////////////////////////////////////////
-		// Set up OpenGL state that will never change //
-		////////////////////////////////////////////////
-		
-		// Depth test will always be enabled
-		glEnable(GL_DEPTH_TEST);
-        
-		// We will always cull back faces for better performance
-		glEnable(GL_CULL_FACE);
-		
-		// Draw our scene once without presenting the rendered image.
-		//   This is done in order to pre-warm OpenGL
-		// We don't need to present the buffer since we don't actually want the
-		//   user to see this, we're only drawing as a pre-warm stage
-		//self->render();
-		
 		// Reset the m_characterAngle which is incremented in render
 		m_characterAngle = 0;
 		
@@ -408,9 +384,8 @@ void renderer_impl::resize(GLuint width, GLuint height) {
 	m_viewWidth = width;
 	m_viewHeight = height;
     
-    //m_deferredFBO = buildFBOWithWidthAndHeight(m_viewWidth, m_viewHeight);
     m_deferredFBO->resize(width, height);
-    m_camera->projection_ = GLKMatrix4MakePerspective(45, (float)m_viewWidth / (float)m_viewHeight,1.0,100);
+    // m_camera->projection_ = GLKMatrix4MakePerspective(45, (float)m_viewWidth / (float)m_viewHeight,1.0,100);
 }
 
 
@@ -419,50 +394,80 @@ void renderer_impl::render() {
     mat4 view;
     
     
-    //NSPoint mouse = [NSEvent mouseLocation];
-    //NSLog(@"Mouse %f, %f", mouse.x, mouse.y);
+    m_camera->projection_ = GLKMatrix4MakePerspective(M_PI_4, (float)m_viewWidth / (float)m_viewHeight,1.0,100);
+    m_camera->view_ = GLKMatrix4MakeLookAt(10, 20, 30, 0, 0, 0, 0, 1, 0);
+
+
+    spotlight s;
+    s.projection_ = GLKMatrix4MakePerspective(16.f/30.f, 1, 1.0, 100);
+    s.view_ = GLKMatrix4MakeLookAt(20*sin(m_characterAngle/157), 10, 20*cos(m_characterAngle/157), 0, 0, 0, 0, 1, 0);
+    //s.view_ = GLKMatrix4MakeLookAt(20*sin(2), 10, 20*cos(2), 0, 0, 0, 0, 1, 0);
     
-	
-	// Use the program for rendering our character
-	m_characterPrg->use();
-		
+    // shadow map
     
-    view = translate(vec3{0.f, 0.f, -20.f}) * rotate(M_PI_2, vec3{1.f, 0.f, 0.f});
+    m_shadowFBO->bind();
+    glViewport(0,0,1024,1024);
+    
+    m_characterPrg->use();
+    view = identity4;
+    s.drawAsCamera(*m_characterPrg);
+    
+    GLenum bufs[] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2 };
+    glDrawBuffers(0, bufs);
+    glClearColor(0,0,0,0);
+    glClear(GL_DEPTH_BUFFER_BIT);
+    
+    glEnable(GL_POLYGON_OFFSET_FILL);
+    glPolygonOffset(1, 1);
+    
+    m_character->draw(*m_characterPrg, view);
+    glDisable(GL_POLYGON_OFFSET_FILL);
+
+    // Use the program for rendering our character
+
+    m_deferredFBO->bind();
+    glViewport(0, 0, m_viewWidth, m_viewHeight);
+
     m_camera->draw(*m_characterPrg);
 
     
     
-    m_character->model = rotate(m_characterAngle/57, vec3{0.7f, 0.3f, 0.1f});
+    //m_character->model = rotate(m_characterAngle/57, vec3{0.7f, 0.3f, 0.1f});
     
-    m_deferredFBO->bind();
 
-    GLenum bufs[] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2 };
     glDrawBuffers(3, bufs);
-
-    glClearColor(0,0,1,0);
+    glClearColor(0,0,0,0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 
+    glActiveTexture(GL_TEXTURE0);
     m_character->draw(*m_characterPrg, view);
     
     // Bind our default FBO to render to the screen
 	glBindFramebuffer(GL_FRAMEBUFFER, m_defaultFBOName);
-    glClearColor(0,1,0,0);
+    glClearColor(0,0,0,0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+    GetGLError();
+
     
-    camera().draw(*m_characterPrg);
+    m_lightingPrg->use();
+    m_camera->draw(*m_lightingPrg);
+    s.draw(*m_lightingPrg);
+
     
+    glActiveTexture(GL_TEXTURE0);
+    m_deferredFBO->color_attachment[0]->bind();
+    glActiveTexture(GL_TEXTURE1);
+    m_texture->bind();
+    glActiveTexture(GL_TEXTURE2);
+    m_deferredFBO->color_attachment[1]->bind();
+    glActiveTexture(GL_TEXTURE3);
+    m_deferredFBO->depth_attachment->bind();
+    glActiveTexture(GL_TEXTURE4);
+    m_shadowFBO->depth_attachment->bind();
     
-    //m_displays[0]->tex_ = m_deferredFBO->color_attachment[0];
-    m_screen->tex_ = m_deferredFBO->color_attachment[rand() % 3];
-    /*
-    m_displays[1]->tex_ = m_deferredFBO->color_attachment[1];
-    m_displays[2]->tex_ = m_deferredFBO->color_attachment[2];
-    m_displays[3]->tex_ = m_deferredFBO->depth_attachment;
-    */
-    //m_display->draw(*m_characterPrg, translate(vec3{1.f,-1.f,-3.f}) * rotateY(M_PI));
-    m_screen->draw(*m_characterPrg, identity4);
+    m_screen->draw(*m_lightingPrg, identity4);
     
     GetGLError();
 	
@@ -493,21 +498,17 @@ static GLsizei GetGLTypeSize(GLenum type)
 }
 
 
-unique_ptr<texture2d> renderer_impl::buildTexture(demoImage* image)
+unique_ptr<texture2d> renderer_impl::buildTexture(string pathForResource)
 {
+    NSString* filePathName = nil;
+    
+    filePathName = [[NSBundle mainBundle] pathForResource:[NSString stringWithUTF8String:pathForResource.c_str()] ofType:@"png"];
+    demoImage *image = imgLoadImage([filePathName cStringUsingEncoding:NSASCIIStringEncoding], false);
+    
+    
+    
     auto texName = unique_ptr<texture2d>{new texture2d{image->width, image->height, image->format, image->type}};
-	/*GLuint texName;
 	
-	// Create a texture object to apply to model
-	glGenTextures(1, &texName);
-	glBindTexture(GL_TEXTURE_2D, texName);
-	
-	// Set up filter and wrap modes for this texture object
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-	*/
 	// Indicate that pixel rows are tightly packed 
 	//  (defaults to stride of 4 which is kind of only good for
 	//  RGBA or FLOAT data types)
@@ -522,6 +523,9 @@ unique_ptr<texture2d> renderer_impl::buildTexture(demoImage* image)
     texName->generateMipmap();
 	
 	GetGLError();
+    
+    imgDestroyImage(image);
+
 	
 	return texName;
 }
@@ -532,15 +536,28 @@ unique_ptr<framebuffer> renderer_impl::buildFBO(GLuint width, GLuint height)
 
     auto c1 = unique_ptr<texture2d>(new texture2d(width, height, GL_RGBA, GL_UNSIGNED_BYTE));
     auto c2 = unique_ptr<texture2d>(new texture2d(width, height, GL_RGBA, GL_UNSIGNED_BYTE));
-    auto c3 = unique_ptr<texture2d>(new texture2d(width, height, GL_RGBA, GL_UNSIGNED_BYTE));
     auto d1 = unique_ptr<texture2d>(new texture2d(width, height, GL_DEPTH_COMPONENT, GL_UNSIGNED_SHORT));
 	   
     auto fboName = unique_ptr<framebuffer>(new framebuffer());
     fboName->bind()
         .attach_color(0, std::move(c1))
         .attach_color(1, std::move(c2))
-        .attach_color(2, std::move(c3))
         .attach_depth(std::move(d1));
+    
+	
+	GetGLError();
+	
+	return fboName;
+}
+
+unique_ptr<framebuffer> renderer_impl::buildShadowFBO(GLuint width, GLuint height)
+{
+    
+    auto d1 = unique_ptr<texture2d>(new texture2d(width, height, GL_DEPTH_COMPONENT, GL_UNSIGNED_SHORT));
+    
+    auto fboName = unique_ptr<framebuffer>(new framebuffer());
+    fboName->bind()
+    .attach_depth(std::move(d1));
     
 	
 	GetGLError();
@@ -587,8 +604,7 @@ unique_ptr<program> renderer_impl::buildProgramFromFile(string s) {
         .bindAttrib(NORMAL_ATTRIB_IDX, "inNormal")
         .bindAttrib(TEXCOORD_ATTRIB_IDX, "inTexcoord")
         .bindFrag(0, "outColor")
-        .bindFrag(1, "outPosition")
-        .bindFrag(2, "outNormal");
+        .bindFrag(1, "outNormal");
     
     prgName->link().validate().use();
 	
@@ -598,11 +614,18 @@ unique_ptr<program> renderer_impl::buildProgramFromFile(string s) {
 	///////////////////////////////////////
 
 	
+    /*
 	GLint samplerLoc = glGetUniformLocation(*prgName, "diffuseTexture");
 	
 	// Indicate that the diffuse texture will be bound to texture unit 0
 	GLint unit = 0;
 	glUniform1i(samplerLoc, unit);
+     */
+    (*prgName)["diffuseTexture"] = 0;
+    (*prgName)["spotlightTexture"] = 1;
+    (*prgName)["normalTexture"] = 2;
+    (*prgName)["depthTexture"] = 3;
+    (*prgName)["shadowMapTexture"] = 4;
 	
 	GetGLError();
 	
